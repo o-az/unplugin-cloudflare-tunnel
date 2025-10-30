@@ -43,7 +43,7 @@ export default defineConfig({
 })
 ```
 
-Example in [./example/vite.config.ts](./example/vite.config.ts): `bun --filter example dev:vite`
+Example in [./example/vite.config.ts](../example/vite.config.ts): `bun --filter example dev:vite`
 
 <br></details>
 
@@ -78,7 +78,7 @@ export default {
 }
 ```
 
-Example in [./example/rspack.config.ts](./example/rspack.config.ts): `bun --filter example dev:rspack`
+Example in [./example/rspack.config.ts](../example/rspack.config.ts): `bun --filter example dev:rspack`
 
 <br></details>
 
@@ -96,7 +96,7 @@ module.exports = {
 }
 ```
 
-Example in [./example/webpack.config.ts](./example/webpack.config.ts): `bun --filter example dev:webpack`
+Example in [./example/webpack.config.ts](../example/webpack.config.ts): `bun --filter example dev:webpack`
 
 <br></details>
 
@@ -167,7 +167,7 @@ export default defineConfig({
 })
 ```
 
-Example in [./example/farm.config.ts](./example/farm.config.ts): `bun --filter example dev:farm`
+Example in [./example/farm.config.ts](../example/farm.config.ts): `bun --filter example dev:farm`
 
 <br></details>
 
