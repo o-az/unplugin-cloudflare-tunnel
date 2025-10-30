@@ -41,13 +41,12 @@ if (!NPM_TOKEN) {
 }
 
 async function build() {
-  const { stderr, stdout, exitCode } =
-    await Bun.$ /* sh */`bun --filter unplugin-cloudflare-tunnel build`.env({
-      ...Bun.env,
-      NODE_ENV: 'production',
-      NODE_AUTH_TOKEN: NPM_TOKEN,
-      NPM_CONFIG_TOKEN: NPM_TOKEN,
-    })
+  const { stderr, stdout, exitCode } = await Bun.$ /* sh */`bun run build`.env({
+    ...Bun.env,
+    NODE_ENV: 'production',
+    NODE_AUTH_TOKEN: NPM_TOKEN,
+    NPM_CONFIG_TOKEN: NPM_TOKEN,
+  })
 
   if (exitCode !== 0) {
     console.error(`Non-zero exit code: ${exitCode}`, stderr.toString())
@@ -59,14 +58,12 @@ async function build() {
 }
 
 async function pack() {
-  const { stderr, stdout, exitCode } = await Bun.$ /* sh */`bun pm pack`
-    .env({
-      ...Bun.env,
-      NODE_ENV: 'production',
-      NODE_AUTH_TOKEN: NPM_TOKEN,
-      NPM_CONFIG_TOKEN: NPM_TOKEN,
-    })
-    .cwd('.')
+  const { stderr, stdout, exitCode } = await Bun.$ /* sh */`bun pm pack`.env({
+    ...Bun.env,
+    NODE_ENV: 'production',
+    NODE_AUTH_TOKEN: NPM_TOKEN,
+    NPM_CONFIG_TOKEN: NPM_TOKEN,
+  })
 
   if (exitCode !== 0) {
     console.error(`Non-zero exit code: ${exitCode}`, stderr.toString())
@@ -82,6 +79,11 @@ async function publish(registry: string) {
 
   const packedFile = `./${pkgJson.name}-${pkgJson.version}.tgz`
 
+  const isPrerelease =
+    pkgJson.version.includes('alpha') ||
+    pkgJson.version.includes('beta') ||
+    pkgJson.version.includes('rc')
+
   const { stderr, stdout, exitCode } = await Bun.$ /* sh */`
     npm publish ${packedFile} \
       --access="public" \
@@ -90,7 +92,8 @@ async function publish(registry: string) {
       --auth-type="legacy" \
       --registry="${registry}" \
       --provenance=${Bun.env.PROVENANCE || true} \
-      ${values['dry-run'] ? '--dry-run' : ''}`
+      ${values['dry-run'] ? '--dry-run' : ''} \
+      ${isPrerelease ? '--tag=next' : ''}`
     .env({
       ...Bun.env,
       NODE_ENV: 'production',
@@ -116,5 +119,12 @@ build()
   })
   .catch(error => {
     console.error(error)
+    if (error instanceof Error) {
+      console.info(error.stack)
+      console.info(error.message)
+      console.info(error.name)
+      console.info(error.cause)
+    }
+
     NodeProcess.exit(1)
   })

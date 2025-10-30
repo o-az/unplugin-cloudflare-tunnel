@@ -9,3 +9,5 @@ _
 .env
 .env.*
 !.env.example
+*.tgz
+*.log
