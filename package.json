@@ -126,6 +126,7 @@
   ],
   "license": "MIT",
   "repository": "o-az/unplugin-cloudflare-tunnel",
+  "readme": "https://github.com/o-az/unplugin-cloudflare-tunnel/blob/main/.github/README.md",
   "author": "Omar A <gh@omar.mov>",
   "publishConfig": {
     "access": "public"

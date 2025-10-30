@@ -89,7 +89,6 @@ async function publish(registry: string) {
       --access="public" \
       --verbose \
       --no-git-checks \
-      --auth-type="legacy" \
       --registry="${registry}" \
       --provenance=${Bun.env.PROVENANCE || true} \
       ${values['dry-run'] ? '--dry-run' : ''} \
