@@ -1,0 +1,36 @@
+{
+  "name": "example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "dev:vite": "vite --config='vite.config.ts'",
+    "dev:rspack": "rspack serve --config='rspack.config.ts'",
+    "dev:webpack": "webpack serve --config='webpack.config.ts' --disable-interpret",
+    "dev:farm": "farm --config='farm.config.ts'",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@farmfe/core": "^1.7.11",
+    "@rspack/core": "^1.5.7",
+    "esbuild": "^0.25.11",
+    "rolldown": "^1.0.0-beta.45",
+    "rollup": "^4.52.3",
+    "vite": "^7.1.12",
+    "webpack": "^5.102.0"
+  },
+  "devDependencies": {
+    "@farmfe/cli": "^1.0.5",
+    "@rspack/cli": "^1.5.7",
+    "@total-typescript/ts-reset": "^0.6.1",
+    "@types/bun": "^1.3.1",
+    "@types/node": "^24.5.2",
+    "@types/webpack": "^5.28.5",
+    "@types/webpack-dev-server": "^4.7.2",
+    "html-webpack-plugin": "^5.6.4",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "webpack-cli": "^6.0.1"
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "name": "unplugin-cloudflare-tunnel",
+  "version": "0.0.0",
+  "packageManager": "bun@1.3.1",
+  "description": "A plugin that automatically creates and manages Cloudflare tunnels for local development",
+  "type": "module",
+  "imports": {
+    "#*": "./src/*",
+    "#package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./astro": "./dist/astro.js",
+    "./vite": "./dist/vite.js",
+    "./webpack": "./dist/webpack.js",
+    "./rspack": "./dist/rspack.js",
+    "./rollup": "./dist/rollup.js",
+    "./rolldown": "./dist/rolldown.js",
+    "./esbuild": "./dist/esbuild.js",
+    "./farm": "./dist/farm.js",
+    "./api": "./dist/api.js",
+    "./*": "./*",
+    "./virtual": "./dist/virtual.d.ts"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/*",
+        "./*"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "tsdown --config='tsdown.config.ts'",
+    "check": "biome check . --fix --unsafe",
+    "check:types": "tsc --project tsconfig.json --noEmit",
+    "publint": "bun x publint@latest run --pack bun --strict",
+    "attw": "bun x @arethetypeswrong/cli@latest --pack . --ignore-rules='false-cjs' --ignore-rules='cjs-resolves-to-esm'",
+    "changeset:version": "changeset version && biome format . --write",
+    "changeset:publish": "bun ./scripts/publish.ts --registry='https://registry.npmjs.org'",
+    "*": "bun run build && bun check && bun check:types",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "cloudflared": "^0.7.1",
+    "unplugin": "^2.3.10",
+    "unplugin-utils": "^0.3.1",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/core": "^0.18.2",
+    "@biomejs/biome": "^2.3.2",
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.7",
+    "@rspack/core": "^1.5.7",
+    "@sxzz/test-utils": "^0.5.12",
+    "@total-typescript/ts-reset": "^0.6.1",
+    "@types/bun": "^1.3.1",
+    "@types/node": "^24.9.1",
+    "execa": "^9.6.0",
+    "publint": "^0.3.15",
+    "rollup": "^4.52.3",
+    "tsdown": "^0.15.10",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "unplugin-unused": "^0.5.4",
+    "vite": "^7.1.12",
+    "vitest": "^4.0.3",
+    "webpack-dev-server": "^5.2.2"
+  },
+  "peerDependencies": {
+    "vite": ">=3",
+    "esbuild": ">=0.2",
+    "rollup": "^3",
+    "@farmfe/core": ">=1",
+    "webpack": "^5",
+    "@rspack/core": ">=1",
+    "astro": ">=5"
+  },
+  "peerDependenciesMeta": {
+    "@farmfe/core": {
+      "optional": true
+    },
+    "esbuild": {
+      "optional": true
+    },
+    "rollup": {
+      "optional": true
+    },
+    "rolldown": {
+      "optional": true
+    },
+    "@rspack/core": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    },
+    "webpack": {
+      "optional": true
+    },
+    "astro": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "keywords": [
+    "unplugin",
+    "vite",
+    "webpack",
+    "rspack",
+    "rollup",
+    "rolldown",
+    "esbuild",
+    "farm",
+    "astro"
+  ],
+  "license": "MIT",
+  "repository": "o-az/unplugin-cloudflare-tunnel",
+  "author": "Omar A <gh@omar.mov>",
+  "publishConfig": {
+    "access": "public"
+  }
+}

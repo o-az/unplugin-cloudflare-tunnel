@@ -1,0 +1,64 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "resolvePackageJsonImports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "alwaysStrict": true,
+    "checkJs": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "allowJs": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "types": [
+      "bun",
+      "node"
+    ],
+    "paths": {
+      "#unplugin-cloudflare-tunnel/*": [
+        "../src/*"
+      ],
+      "virtual:unplugin-cloudflare-tunnel": [
+        "../dist/virtual.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "main.ts",
+    "reset.d.ts",
+    "package.json",
+    "vite-env.d.ts",
+    "vite.config.ts",
+    "farm.config.ts",
+    "rspack.config.ts",
+    "rollup.config.ts",
+    "esbuild.config.ts",
+    "webpack.config.ts",
+    "rolldown.config.ts"
+  ],
+  "include": [
+    "**/*.ts",
+    "**/*.js",
+    "**/*.mjs"
+  ]
+}

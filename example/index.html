@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" >
+    <title>Unplugin Cloudflare Tunnel Example</title>
+  </head>
+  <body>
+    <div id="app">
+      <h1>🌐 Unplugin Cloudflare Tunnel Example</h1>
+      <p>This is a basic Vite app demonstrating the unplugin-cloudflare-tunnel.</p>
+
+      <div class="card">
+        <h2>Features</h2>
+        <ul>
+          <li>✅ Automatic Cloudflare Tunnel creation</li>
+          <li>✅ DNS record management</li>
+          <li>✅ HTTPS certificate via Cloudflare</li>
+          <li>✅ Environment Variable support</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Status</h2>
+        <p id="status">Checking tunnel status...</p>
+        <button id="refresh" type="button">Refresh Status</button>
+      </div>
+
+      <div class="card">
+        <h2>Development Info</h2>
+        <p>
+          <strong>Local:</strong>
+          <span id="local-url">http://localhost:5173</span>
+        </p>
+        <p>
+          <strong>Tunnel:</strong>
+          <span id="tunnel-url">Check console for tunnel URL</span>
+          <button id="copy-url" style="display: none; margin-left: 8px;">📋 Copy</button>
+        </p>
+      </div>
+    </div>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>

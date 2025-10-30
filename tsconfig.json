@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "lib": [
+      "es2023"
+    ],
+    "moduleDetection": "force",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "types": [
+      "node"
+    ],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noEmit": true,
+    "declaration": true,
+
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "resolvePackageJsonImports": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src",
+    "tests",
+    "scripts"
+  ],
+  "files": [
+    "env.d.ts",
+    "reset.d.ts",
+    "package.json",
+    "tsdown.config.ts"
+  ],
+  "exclude": [
+    "tests/fixtures",
+    "./src/_index.ts"
+  ]
+}
