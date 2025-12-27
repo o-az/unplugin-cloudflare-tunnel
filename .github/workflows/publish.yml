@@ -50,7 +50,7 @@ jobs:
 
       - name: "Pull Request || Publish"
         id: changesets
-        uses: changesets/action@main
+        uses: changesets/action@v1
         with:
           publish: bun changeset:publish
           version: bun changeset:version
