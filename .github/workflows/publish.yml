@@ -63,14 +63,11 @@ jobs:
       - name: "Ensure Node.js in PATH & v22"
         # install Node.js v22 if not present in PATH
         run: |
-          if ! echo "$PATH" | grep -q "$RUNNER_TOOL_CACHE/node/22*/x64/bin"; then
+          if ! echo "$PATH" | grep --quiet "$RUNNER_TOOL_CACHE/node/22*/x64/bin"; then
             npm add --global node@22
           fi
-          # export Node.js v22 to PATH globally
-          echo "$RUNNER_TOOL_CACHE/node/22*/x64/bin" >> $GITHUB_PATH
-          echo "::add-path::$GITHUB_PATH"
           # verify Node.js is v22
-          node --version | grep -q "v22"
+          node --version | grep --quiet "v22"
           if [ $? -ne 0 ]; then
             echo "Node.js is not v22"
             exit 1
