@@ -1,84 +1,45 @@
-import { z } from 'zod'
+import * as z from 'zod/mini'
 import NodeFS from 'node:fs/promises'
 import { install } from 'cloudflared'
 
-// Zod schemas for Cloudflare API responses
-export const CloudflareErrorSchema: z.ZodType<{
-  code: number
-  message: string
-}> = z.object({
+export const CloudflareErrorSchema = z.object({
   code: z.number(),
   message: z.string(),
 })
 
-export const CloudflareApiResponseSchema: z.ZodType<{
-  success: boolean
-  errors?: Array<{ code: number; message: string }>
-  messages?: Array<string>
-  result: unknown
-}> = z.object({
+export const CloudflareApiResponseSchema = z.object({
   success: z.boolean(),
-  errors: z.array(CloudflareErrorSchema).optional(),
-  messages: z.array(z.string()).optional(),
+  errors: z.optional(z.array(CloudflareErrorSchema)),
+  messages: z.optional(z.array(z.string())),
   result: z.unknown(),
 })
 
-export const AccountSchema: z.ZodType<{
-  id: string
-  name: string
-}> = z.object({
+export const AccountSchema = z.object({
   id: z.string(),
   name: z.string(),
 })
 
-export const ZoneSchema: z.ZodType<{
-  id: string
-  name: string
-}> = z.object({
+export const ZoneSchema = z.object({
   id: z.string(),
   name: z.string(),
 })
 
-export const TunnelSchema: z.ZodType<{
-  id: string
-  name: string
-  account_tag: string
-  created_at: string
-  connections?: Array<unknown>
-}> = z.object({
+export const TunnelSchema = z.object({
   id: z.string(),
   name: z.string(),
   account_tag: z.string(),
   created_at: z.string(),
-  connections: z.array(z.unknown()).optional(),
+  connections: z.optional(z.array(z.unknown())),
 })
 
-export const DNSRecordSchema: z.ZodType<{
-  id: string
-  type: string
-  name: string
-  content: string
-  proxied: boolean
-  comment?: string | null
-}> = z.object({
+export const DNSRecordSchema = z.object({
   id: z.string(),
   type: z.string(),
   name: z.string(),
   content: z.string(),
   proxied: z.boolean(),
-  comment: z.string().nullish(),
+  comment: z.nullish(z.string()),
 })
-
-// Type definitions (exported for potential external use)
-export type CloudflareApiResponse<T = unknown> = z.infer<
-  typeof CloudflareApiResponseSchema
-> & {
-  result: T
-}
-export type Account = z.infer<typeof AccountSchema>
-export type Zone = z.infer<typeof ZoneSchema>
-export type Tunnel = z.infer<typeof TunnelSchema>
-export type DNSRecord = z.infer<typeof DNSRecordSchema>
 
 /* -------------------------------------------------------------------------- */
 /* Utility functions                                                          */

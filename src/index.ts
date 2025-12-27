@@ -10,21 +10,18 @@
  * @license MIT
  */
 
-import type { Server as HTTPServer } from 'node:http'
-import type { Server as HTTPSServer } from 'node:https'
-import type {
-  Http2Server as HTTP2Server,
-  Http2SecureServer as HTTP2SecureServer,
-} from 'node:http2'
-import { bin, install } from 'cloudflared'
-import fs from 'node:fs/promises'
-import { spawn, exec } from 'node:child_process'
-import { z } from 'zod'
 import {
   createUnplugin,
   type UnpluginFactory,
   type UnpluginInstance,
 } from 'unplugin'
+import * as z from 'zod/mini'
+import NodeFS from 'node:fs/promises'
+import { bin, install } from 'cloudflared'
+import type * as NodeHTTP from 'node:http'
+import type * as NodeHTTPS from 'node:https'
+import type * as NodeHTTP2 from 'node:http2'
+import * as NodeChildProcess from 'node:child_process'
 
 const PLUGIN_NAME = 'unplugin-cloudflare-tunnel'
 
@@ -80,8 +77,8 @@ const CloudflareErrorSchema = z.object({
 
 const CloudflareApiResponseSchema = z.object({
   success: z.boolean(),
-  errors: z.array(CloudflareErrorSchema).optional(),
-  messages: z.array(z.string()).optional(),
+  errors: z.optional(z.array(CloudflareErrorSchema)),
+  messages: z.optional(z.array(z.string())),
   result: z.unknown(),
 })
 
@@ -100,7 +97,7 @@ const TunnelSchema = z.object({
   name: z.string(),
   account_tag: z.string(),
   created_at: z.string(),
-  connections: z.array(z.unknown()).optional(),
+  connections: z.optional(z.array(z.unknown())),
 })
 
 const DNSRecordSchema = z.object({
@@ -109,7 +106,7 @@ const DNSRecordSchema = z.object({
   name: z.string(),
   content: z.string(),
   proxied: z.boolean(),
-  comment: z.string().nullish(),
+  comment: z.nullish(z.string()),
 })
 
 // Type definitions (exported for potential external use)
@@ -288,7 +285,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
   const GLOBAL_STATE = Symbol.for('unplugin-cloudflare-tunnel.state')
 
   type GlobalState = {
-    child?: ReturnType<typeof spawn>
+    child?: ReturnType<typeof NodeChildProcess.spawn>
     exitHandlersRegistered?: boolean
     configHash?: string
     shuttingDown?: boolean
@@ -301,7 +298,8 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
   ;(globalThis as any)[GLOBAL_STATE] = globalState
 
   // Local reference, kept in sync with the global state
-  let child: ReturnType<typeof spawn> | undefined = globalState.child
+  let child: ReturnType<typeof NodeChildProcess.spawn> | undefined =
+    globalState.child
 
   // ---------------------------------------------------------------------
   // Virtual module to expose the tunnel URL at dev time
@@ -725,7 +723,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
     method: string,
     url: string,
     body?: unknown,
-    resultSchema?: z.ZodSchema<T>,
+    resultSchema?: z.ZodMiniType<T>,
   ): Promise<T> => {
     try {
       debugLog('→ CF API', method, url, body ? { body } : '')
@@ -817,7 +815,10 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
   const spawnQuickTunnel = async (
     localTarget: string,
-  ): Promise<{ child: ReturnType<typeof spawn>; url: string }> => {
+  ): Promise<{
+    child: ReturnType<typeof NodeChildProcess.spawn>
+    url: string
+  }> => {
     const cloudflaredArgs = ['tunnel']
     cloudflaredArgs.push('--loglevel', 'info')
     if (logFile) {
@@ -826,7 +827,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
     cloudflaredArgs.push('--url', localTarget)
 
     debugLog('Spawning quick tunnel:', bin, cloudflaredArgs)
-    const child = spawn(bin, cloudflaredArgs, {
+    const child = NodeChildProcess.spawn(bin, cloudflaredArgs, {
       stdio: ['ignore', 'pipe', 'pipe'],
       detached: false,
       windowsHide: true,
@@ -930,7 +931,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
       const killed = child.kill(signal)
 
       if (!killed && process.platform === 'win32') {
-        exec(`taskkill /pid ${child.pid} /T /F`, () => {})
+        NodeChildProcess.exec(`taskkill /pid ${child.pid} /T /F`, () => {})
       }
 
       if (signal === 'SIGTERM') {
@@ -940,7 +941,10 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
               '[unplugin-cloudflare-tunnel] Force killing cloudflared process...',
             )
             if (process.platform === 'win32') {
-              exec(`taskkill /pid ${child.pid} /T /F`, () => {})
+              NodeChildProcess.exec(
+                `taskkill /pid ${child.pid} /T /F`,
+                () => {},
+              )
             } else {
               child.kill('SIGKILL')
             }
@@ -998,10 +1002,10 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
   // Main server configuration logic (to be called from Vite's configureServer)
   // ---------------------------------------------------------------------
   type NodeServerLike =
-    | HTTPServer
-    | HTTPSServer
-    | HTTP2Server
-    | HTTP2SecureServer
+    | NodeHTTP.Server
+    | NodeHTTPS.Server
+    | NodeHTTP2.Http2Server
+    | NodeHTTP2.Http2SecureServer
 
   type CompatibleDevServer = {
     httpServer?: NodeServerLike | null
@@ -1540,7 +1544,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
       debugLog('Spawning cloudflared', bin, cloudflaredArgs)
       cloudflaredArgs.push('run', '--token', token)
-      child = spawn(bin, cloudflaredArgs, {
+      child = NodeChildProcess.spawn(bin, cloudflaredArgs, {
         stdio: ['ignore', 'pipe', 'pipe'],
         detached: false,
         windowsHide: true,
@@ -2015,7 +2019,7 @@ function normalizeAddress(
 
 async function ensureCloudflaredBinary(binPath: string) {
   try {
-    await fs.access(binPath)
+    await NodeFS.access(binPath)
   } catch {
     console.log('[unplugin-cloudflare-tunnel] Installing cloudflared binary...')
     await install(binPath)
