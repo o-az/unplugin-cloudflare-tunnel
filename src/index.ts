@@ -265,16 +265,18 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
       resolveId(id) {
         if (id === VIRTUAL_MODULE_ID_STUB) {
-          return '\0' + VIRTUAL_MODULE_ID_STUB
+          return id
         }
-        return
+      },
+
+      loadInclude(id) {
+        return id === VIRTUAL_MODULE_ID_STUB
       },
 
       load(id) {
-        if (id === '\0' + VIRTUAL_MODULE_ID_STUB) {
+        if (id === VIRTUAL_MODULE_ID_STUB) {
           return 'export function getTunnelUrl() { return ""; }'
         }
-        return
       },
     }
   }
@@ -1394,9 +1396,10 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
             undefined,
             z.array(DNSRecordSchema),
           )
-          const existing = existingDnsRecords.length > 0
+          const existingRecord = existingDnsRecords[0]
+          const expectedContent = `${tunnelId}.cfargotunnel.com`
 
-          if (!existing) {
+          if (!existingRecord) {
             console.log(
               `[unplugin-cloudflare-tunnel] Creating DNS record for ${hostname}...`,
             )
@@ -1407,7 +1410,27 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
               {
                 type: 'CNAME',
                 name: hostname!,
-                content: `${tunnelId}.cfargotunnel.com`,
+                content: expectedContent,
+                proxied: true,
+                comment: generateDnsComment(),
+              },
+              DNSRecordSchema,
+            )
+          } else if (existingRecord.content !== expectedContent) {
+            debugLog(
+              `← DNS record for ${hostname} points to different tunnel, updating...`,
+            )
+            pluginLog.info(
+              `Updating DNS record for ${hostname} to point to tunnel '${tunnelName}'...`,
+            )
+            await cf(
+              apiToken,
+              'PUT',
+              `/zones/${zoneId}/dns_records/${existingRecord.id}`,
+              {
+                type: 'CNAME',
+                name: hostname!,
+                content: expectedContent,
                 proxied: true,
                 comment: generateDnsComment(),
               },
@@ -1923,20 +1946,22 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
     enforce: 'pre' as const,
 
     // Virtual module hooks
-    resolveId: id => {
+    resolveId(id) {
       if (id === VIRTUAL_MODULE_ID) {
         debugLog('resolveId called for', id)
-        return '\0' + VIRTUAL_MODULE_ID
+        return id
       }
-      return
     },
 
-    load: async id => {
-      const url = await globalState.tunnelUrl
-      if (id === '\0' + VIRTUAL_MODULE_ID)
-        return `export function getTunnelUrl() { return ${JSON.stringify(url || '')}; }`
+    loadInclude(id) {
+      return id === VIRTUAL_MODULE_ID
+    },
 
-      return
+    async load(id) {
+      if (id === VIRTUAL_MODULE_ID) {
+        const url = await globalState.tunnelUrl
+        return `export function getTunnelUrl() { return ${JSON.stringify(url || '')}; }`
+      }
     },
 
     /**

@@ -40,7 +40,7 @@
         "../src/*"
       ],
       "virtual:unplugin-cloudflare-tunnel": [
-        "../dist/virtual.d.ts"
+        "../src/virtual.d.ts"
       ]
     }
   },
