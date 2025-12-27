@@ -16,7 +16,7 @@ concurrency:
 
 env:
   ACTIONS_RUNNER_DEBUG: true
-  NODE_OPTIONS: '--openssl-legacy-provider --disable-warning=ExperimentalWarning --disable-warning=DeprecationWarning'
+  NODE_OPTIONS: "--openssl-legacy-provider --disable-warning=ExperimentalWarning --disable-warning=DeprecationWarning"
 
 jobs:
   changesets:
@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
-      
+
       - name: "Clear npm Auth Tokens"
         # actions/setup-node@v6 automatically adds npm auth tokens
         # but we publish using GitHub Trusted Publisher
@@ -46,6 +46,7 @@ jobs:
           echo "PROVENANCE=" >> $GITHUB_ENV
           echo "NODE_AUTH_TOKEN=" >> $GITHUB_ENV
           echo "NPM_CONFIG_TOKEN=" >> $GITHUB_ENV
+          echo "NPM_CONFIG_USERCONFIG=.npmrc" >> $GITHUB_ENV
 
       - name: "Install Dependencies"
         run: |
@@ -64,6 +65,9 @@ jobs:
       - name: "Pull Request || Publish"
         id: changesets
         uses: changesets/action@v1
+        env:
+          NPM_CONFIG_USERCONFIG: .npmrc
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           publish: bun changeset:publish
           version: bun changeset:version
@@ -71,8 +75,6 @@ jobs:
           commit: "chore: version package"
           setupGitUser: false
           createGithubReleases: ${{ github.ref == 'refs/heads/main' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN }}
 
       - name: "Publish Canary Release"
         if: steps.changesets.outputs.published != 'true'
