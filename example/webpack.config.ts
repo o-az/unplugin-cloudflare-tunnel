@@ -13,16 +13,31 @@ export default {
   devServer: {
     port: 88_11,
   },
+  dotenv: true,
   entry: './main.ts',
   mode: 'development',
+  resolve: {
+    extensions: ['.ts', '.js'],
+  },
+  module: {
+    rules: [
+      {
+        test: /\.ts$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
+    ],
+  },
   plugins: [
     new HtmlWebpackPlugin({
       template: './index.html',
     }),
     CloudflareTunnel({
-      apiToken,
+      tunnelName: 'dev-tunnel',
       hostname: 'dev.sauce.wiki',
       ssl: '*.sauce.wiki',
+      apiToken,
+      logLevel: 'fatal',
       logFile: './logs/cloudflare-tunnel_webpack.log',
     }),
   ],

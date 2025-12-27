@@ -13,7 +13,7 @@ export default defineConfig(config => {
   return {
     plugins: [
       CloudflareTunnel({
-        tunnelName: 'vite-dev-tunnel',
+        tunnelName: 'dev-tunnel',
         hostname: 'dev.sauce.wiki',
         ssl: '*.sauce.wiki',
         apiToken,
