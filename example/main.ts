@@ -1,4 +1,3 @@
-import './style.css'
 import { getTunnelUrl } from 'virtual:unplugin-cloudflare-tunnel'
 
 const app = document.querySelector('div#app')
@@ -6,7 +5,7 @@ const app = document.querySelector('div#app')
 // Simple status checker
 function updateStatus() {
   const statusElement = app?.querySelector('p#status')
-  const tunnelUrlElement = app?.querySelector('span#tunnel-url')
+  const tunnelUrlElement = app?.querySelector('a#tunnel-url')
   if (!statusElement || !tunnelUrlElement) return
 
   try {
@@ -21,13 +20,14 @@ function updateStatus() {
     if (isCloudflare) {
       statusElement.textContent = '🟢 Connected via Cloudflare Tunnel'
       tunnelUrlElement.textContent = tunnelUrl
+      tunnelUrlElement.href = tunnelUrl
       statusElement.style.color = 'green'
 
       // Show copy button for sharing
-      const copyBtn = app?.querySelector('button#copy-url')
-      if (copyBtn) {
-        copyBtn.style.display = 'inline-block'
-        copyBtn.onclick = () => {
+      const copyButton = app?.querySelector('button#copy-url')
+      if (copyButton) {
+        copyButton.style.display = 'inline-block'
+        copyButton.onclick = () => {
           navigator.clipboard.writeText(tunnelUrl)
           alert('Tunnel URL copied to clipboard!')
         }

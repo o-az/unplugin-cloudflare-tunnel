@@ -11,3 +11,5 @@ _
 !.env.example
 *.tgz
 *.log
+
+logs

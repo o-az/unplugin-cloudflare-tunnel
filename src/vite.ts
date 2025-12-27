@@ -4,7 +4,7 @@
  * @module
  */
 
-import { CloudflareTunnel } from './index'
+import { CloudflareTunnel } from '#index.ts'
 
 /**
  * Vite plugin
