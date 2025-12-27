@@ -22,6 +22,7 @@ jobs:
     name: "Changesets 🦋"
     timeout-minutes: 5
     runs-on: ubuntu-latest
+    if: "github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'chore: version package')"
     permissions:
       contents: write
       id-token: write
