@@ -33,8 +33,14 @@ jobs:
       - name: "Setup Node.js"
         uses: actions/setup-node@v6
         with:
-          node-version: "latest"
+          node-version: "lts/*"
           registry-url: "https://registry.npmjs.org"
+      
+      - name: "Clear `NODE_AUTH_TOKEN`"
+        # actions/setup-node@v6 automatically adds `NODE_AUTH_TOKEN`
+        # but we publish using GitHub Trusted Publisher
+        # so `NODE_AUTH_TOKEN` causes problems
+        run: echo "NODE_AUTH_TOKEN=" >> $GITHUB_ENV
 
       - name: "Install Dependencies"
         run: |
