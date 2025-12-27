@@ -34,7 +34,7 @@ jobs:
       - name: "Setup Node.js"
         uses: actions/setup-node@v6
         with:
-          node-version: "latest"
+          node-version: "22"
           registry-url: "https://registry.npmjs.org"
       
       - name: "Clear npm Auth Tokens"
@@ -49,6 +49,8 @@ jobs:
 
       - name: "Install Dependencies"
         run: |
+          # update npm to latest
+          npm add --global npm@latest
           # Setup Bun
           npm add --global bun@latest
           # Install Deps
