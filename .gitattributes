@@ -4,3 +4,5 @@
 
 biome.json linguist-language=Json-With-Comments
 .vscode/*.json linguist-language=Json-With-Comments
+
+bun.lock linguist-generated=true
