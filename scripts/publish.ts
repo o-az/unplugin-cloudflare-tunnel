@@ -65,10 +65,10 @@ async function publish(registry: string) {
     pkgJson.version.includes('beta') ||
     pkgJson.version.includes('rc')
 
-  const env = Object.create({
+  const env = {
     ...Bun.env,
     NODE_ENV: 'production',
-  })
+  }
 
   /**
    * actions/setup-node@v6 automatically adds `NODE_AUTH_TOKEN`
@@ -81,7 +81,7 @@ async function publish(registry: string) {
     'PROVENANCE',
     'NODE_AUTH_TOKEN',
     'NPM_CONFIG_TOKEN',
-  ])
+  ] as const)
     delete env[key]
 
   const { stderr, stdout, exitCode } = await Bun.$ /* sh */`
