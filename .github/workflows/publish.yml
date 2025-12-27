@@ -16,7 +16,7 @@ concurrency:
 
 env:
   ACTIONS_RUNNER_DEBUG: true
-  NODE_OPTIONS: "--openssl-legacy-provider --disable-warning=ExperimentalWarning --disable-warning=DeprecationWarning"
+  NODE_OPTIONS: '--openssl-legacy-provider --disable-warning=ExperimentalWarning --disable-warning=DeprecationWarning'
 
 jobs:
   changesets:
@@ -36,6 +36,16 @@ jobs:
         with:
           node-version: "latest"
           registry-url: "https://registry.npmjs.org"
+      
+      - name: "Clear npm Auth Tokens"
+        # actions/setup-node@v6 automatically adds npm auth tokens
+        # but we publish using GitHub Trusted Publisher
+        # so npm auth tokens cause problems
+        run: |
+          echo "NPM_TOKEN=" >> $GITHUB_ENV
+          echo "PROVENANCE=" >> $GITHUB_ENV
+          echo "NODE_AUTH_TOKEN=" >> $GITHUB_ENV
+          echo "NPM_CONFIG_TOKEN=" >> $GITHUB_ENV
 
       - name: "Install Dependencies"
         run: |
