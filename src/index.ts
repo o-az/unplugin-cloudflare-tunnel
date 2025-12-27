@@ -396,6 +396,20 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
       .replace('http://127.0.0.1:', 'http://localhost:')
   }
 
+  const announceConnecting = () => {
+    if (globalState.__tunnelConnectingAnnounced) return
+    globalState.__tunnelConnectingAnnounced = true
+
+    const message = isQuickMode
+      ? 'cf tunnel connecting…'
+      : hostname
+        ? `cf tunnel connecting… (${hostname})`
+        : 'cf tunnel connecting…'
+
+    console.log('')
+    console.log(colorize(message, ANSI.bold))
+  }
+
   const announceTunnel = (params: {
     key: string
     url: string
@@ -1926,6 +1940,8 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
      */
     vite: {
       config: config => {
+        announceConnecting()
+
         if (!config.server) config.server = {}
 
         if (isQuickMode) {
