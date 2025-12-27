@@ -22,30 +22,13 @@ const { values, positionals: _ } = NodeUtil.parseArgs({
       multiple: true,
       default: ['https://registry.npmjs.org'],
     },
-    'npm-token': {
-      type: 'string',
-      multiple: false,
-    },
   },
 })
-
-const NPM_TOKEN =
-  values['npm-token'] ||
-  Bun.env.NPM_TOKEN ||
-  Bun.env.NODE_AUTH_TOKEN ||
-  Bun.env.NPM_CONFIG_TOKEN
-
-if (!NPM_TOKEN) {
-  console.warn('NPM_TOKEN is not set')
-  NodeProcess.exit(1)
-}
 
 async function build() {
   const { stderr, stdout, exitCode } = await Bun.$ /* sh */`bun run build`.env({
     ...Bun.env,
     NODE_ENV: 'production',
-    NODE_AUTH_TOKEN: NPM_TOKEN,
-    NPM_CONFIG_TOKEN: NPM_TOKEN,
   })
 
   if (exitCode !== 0) {
@@ -61,8 +44,6 @@ async function pack() {
   const { stderr, stdout, exitCode } = await Bun.$ /* sh */`bun pm pack`.env({
     ...Bun.env,
     NODE_ENV: 'production',
-    NODE_AUTH_TOKEN: NPM_TOKEN,
-    NPM_CONFIG_TOKEN: NPM_TOKEN,
   })
 
   if (exitCode !== 0) {
@@ -90,15 +71,11 @@ async function publish(registry: string) {
       --verbose \
       --no-git-checks \
       --registry="${registry}" \
-      ${Bun.env.PROVENANCE === 'true' ? '--provenance' : ''} \
       ${values['dry-run'] ? '--dry-run' : ''} \
       ${isPrerelease ? '--tag=next' : ''}`
     .env({
       ...Bun.env,
       NODE_ENV: 'production',
-      NODE_AUTH_TOKEN: NPM_TOKEN,
-      NPM_CONFIG_TOKEN: NPM_TOKEN,
-      NPM_TOKEN,
     })
     .nothrow()
 
@@ -111,19 +88,34 @@ async function publish(registry: string) {
   console.info('Published successfully')
 }
 
-build()
-  .then(() => pack())
-  .then(async () => {
-    for (const registry of values.registry) await publish(registry)
-  })
-  .catch(error => {
-    console.error(error)
-    if (error instanceof Error) {
-      console.info(error.stack)
-      console.info(error.message)
-      console.info(error.name)
-      console.info(error.cause)
-    }
+async function preChecks() {
+  const npmVersion = await Bun.$ /* sh */`npm --version`
+    .env({ ...Bun.env, NODE_ENV: 'production' })
+    .text()
 
-    NodeProcess.exit(1)
-  })
+  const order = Bun.semver.order(npmVersion, '11.5.1')
+  if (order !== -1) return
+
+  console.error('GH Publisher requires npm version 11.5.1 or higher')
+  console.info('See https://docs.npmjs.com/trusted-publishers')
+  NodeProcess.exit(1)
+}
+
+preChecks().then(() =>
+  build()
+    .then(() => pack())
+    .then(async () => {
+      for (const registry of values.registry) await publish(registry)
+    })
+    .catch(error => {
+      console.error(error)
+      if (error instanceof Error) {
+        console.info(error.name)
+        console.info(error.stack)
+        console.info(error.cause)
+        console.info(error.message)
+      }
+
+      NodeProcess.exit(1)
+    }),
+)
