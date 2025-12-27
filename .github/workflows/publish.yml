@@ -11,8 +11,8 @@ defaults:
     shell: bash
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
 
 env:
   ACTIONS_RUNNER_DEBUG: true
@@ -38,7 +38,7 @@ jobs:
 
       - name: "Install Dependencies"
         run: |
-          npm install --global bun@latest
+          npm add --global bun@latest
           bun install --frozen-lockfile
 
       - name: "Setup Git"

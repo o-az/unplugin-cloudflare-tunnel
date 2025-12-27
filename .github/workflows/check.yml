@@ -27,14 +27,15 @@ jobs:
           bun-version: latest
 
       - name: "Install Dependencies"
-        run: bun install
+        run: bun install --frozen-lockfile
 
-      - name: "Lint, Typecheck, Build"
-        run: |
-          bun x @biomejs/biome check . --reporter='github'
-          bun run build
+      - name: "Setup Biome"
+        uses: biomejs/setup-biome@main
+        with:
+          version: latest
 
-          bun check:types
+      - name: "Format & Lint"
+        run: biome ci .
 
       - name: "Preview Release"
         run: bun x pkg-pr-new publish .
