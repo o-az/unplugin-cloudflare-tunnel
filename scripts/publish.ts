@@ -89,9 +89,11 @@ async function publish(registry: string) {
 }
 
 async function preChecks() {
-  const npmVersion = await Bun.$ /* sh */`npm --version`
-    .env({ ...Bun.env, NODE_ENV: 'production' })
-    .text()
+  const npmVersion = (
+    await Bun.$ /* sh */`npm --version`
+      .env({ ...Bun.env, NODE_ENV: 'production' })
+      .text()
+  ).trim()
 
   const order = Bun.semver.order(npmVersion, '11.5.1')
   if (order !== -1) return
