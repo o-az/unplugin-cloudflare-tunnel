@@ -90,7 +90,7 @@ async function publish(registry: string) {
       --verbose \
       --no-git-checks \
       --registry="${registry}" \
-      --provenance=${Bun.env.PROVENANCE || true} \
+      ${Bun.env.PROVENANCE === 'true' ? '--provenance' : ''} \
       ${values['dry-run'] ? '--dry-run' : ''} \
       ${isPrerelease ? '--tag=next' : ''}`
     .env({
@@ -114,7 +114,7 @@ async function publish(registry: string) {
 build()
   .then(() => pack())
   .then(async () => {
-    for (const registry of values.registry) publish(registry)
+    for (const registry of values.registry) await publish(registry)
   })
   .catch(error => {
     console.error(error)

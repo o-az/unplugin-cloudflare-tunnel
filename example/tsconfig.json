@@ -32,7 +32,8 @@
     "noUncheckedSideEffectImports": true,
     "types": [
       "bun",
-      "node"
+      "node",
+      "typed-query-selector/strict"
     ],
     "paths": {
       "#unplugin-cloudflare-tunnel/*": [

@@ -34,7 +34,7 @@
   "search.exclude": {
     "dist": true,
     "**/_/**": true,
-    "bun.lock": true,
+    "**/bun.lock": true,
     "node_modules": true
   }
 }

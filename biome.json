@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.2/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -81,6 +81,9 @@
     }
   },
   "json": {
+    "assist": {
+      "enabled": true
+    },
     "formatter": {
       "enabled": true,
       "lineWidth": 1
@@ -94,6 +97,12 @@
     }
   },
   "javascript": {
+    "assist": {
+      "enabled": true
+    },
+    "linter": {
+      "enabled": true
+    },
     "formatter": {
       "enabled": true,
       "quoteStyle": "single",
