@@ -65,6 +65,25 @@ async function publish(registry: string) {
     pkgJson.version.includes('beta') ||
     pkgJson.version.includes('rc')
 
+  const env = Object.create({
+    ...Bun.env,
+    NODE_ENV: 'production',
+  })
+
+  /**
+   * actions/setup-node@v6 automatically adds `NODE_AUTH_TOKEN`
+   * but we publish using GitHub Trusted Publisher
+   * and `NODE_AUTH_TOKEN` conflicts with that
+   * so we manually unset all potentially problematic env vars
+   */
+  for (const key of [
+    'NPM_TOKEN',
+    'PROVENANCE',
+    'NODE_AUTH_TOKEN',
+    'NPM_CONFIG_TOKEN',
+  ])
+    delete env[key]
+
   const { stderr, stdout, exitCode } = await Bun.$ /* sh */`
     npm publish ${packedFile} \
       --access="public" \
@@ -73,10 +92,7 @@ async function publish(registry: string) {
       --registry="${registry}" \
       ${values['dry-run'] ? '--dry-run' : ''} \
       ${isPrerelease ? '--tag=next' : ''}`
-    .env({
-      ...Bun.env,
-      NODE_ENV: 'production',
-    })
+    .env(env)
     .nothrow()
 
   if (exitCode !== 0) {
