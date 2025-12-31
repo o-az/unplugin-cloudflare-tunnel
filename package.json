@@ -1,6 +1,6 @@
 {
   "name": "unplugin-cloudflare-tunnel",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A plugin that automatically creates and manages Cloudflare tunnels for local development",
   "type": "module",
   "imports": {
