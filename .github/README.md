@@ -7,9 +7,9 @@ A plugin that automatically creates and manages Cloudflare tunnels for local dev
 Available for:
 
 - [Vite](https://vite.dev),
+- [Rspack](https://rspack.rs)
+- [Webpack](https://webpack.js.org)
 - [Astro](https://astro.build) <sup>soon</sup>
-- [Rspack](https://rspack.rs) <sup>soon</sup>
-- [Webpack](https://webpack.js.org) <sup>soon</sup>
 - [Farm](https://farmfe.org) <sup>soon</sup>
 - [esbuild](https://esbuild.github.io) <sup>soon</sup>
 - [Rollup](https://rollupjs.org) <sup>soon</sup>
@@ -44,22 +44,6 @@ export default defineConfig({
 ```
 
 Example in [./example/vite.config.ts](../example/vite.config.ts): `bun --filter example dev:vite`
-
-<br></details>
-
-<details>
-<summary>Astro</summary><br>
-
-```ts
-// astro.config.ts
-import CloudflareTunnel from 'unplugin-cloudflare-tunnel/astro'
-
-export default defineConfig({
-  integrations: [
-    CloudflareTunnel(),
-  ],
-})
-```
 
 <br></details>
 
@@ -100,78 +84,10 @@ Example in [./example/webpack.config.ts](../example/webpack.config.ts): `bun --f
 
 <br></details>
 
-<details>
-<summary>Rolldown</summary><br>
-
-```ts
-// rolldown.config.ts
-import CloudflareTunnel from 'unplugin-cloudflare-tunnel/rolldown'
-
-export default defineConfig({
-  plugins: [
-    CloudflareTunnel(),
-  ],
-})
-```
-
-<br></details>
-
-<details>
-<summary>Rollup</summary><br>
-
-```ts
-// rollup.config.js
-import CloudflareTunnel from 'unplugin-cloudflare-tunnel/rollup'
-
-export default {
-  plugins: [
-    Caddy({
-      options: {
-        host: 'localhost',
-        domains: ['rollup-example.localhost'],
-      }
-    }),
-  ],
-}
-```
-
-<br></details>
-
-<details>
-<summary>esbuild</summary><br>
-
-```ts
-// esbuild.config.js
-import { build } from 'esbuild'
-import CloudflareTunnel from 'unplugin-cloudflare-tunnel/esbuild'
-
-build({
-  plugins: [CloudflareTunnel()]
-})
-```
-
-<br></details>
-
-<details>
-<summary>Farm</summary><br>
-
-```ts
-// farm.config.ts
-import { defineConfig } from '@farmfe/core'
-import CloudflareTunnel from 'unplugin-cloudflare-tunnel/farm'
-
-export default defineConfig({
-  plugins: [
-    CloudflareTunnel(),
-  ]
-})
-```
-
-Example in [./example/farm.config.ts](../example/farm.config.ts): `bun --filter example dev:farm`
-
-<br></details>
-
 ## Virtual Module: Access Tunnel URL
+
+> [!NOTE]
+> This feature is only available in Vite and Vite-based frameworks (i.e., Astro)
 
 The plugin provides a virtual module that allows you to access the tunnel URL in your application code during development. This is useful for:
 
