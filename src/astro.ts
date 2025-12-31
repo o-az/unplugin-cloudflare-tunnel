@@ -1,29 +1,11 @@
-/**
- * This entry file is for Astro plugin.
- *
- * @module
- */
+import unplugin, { type CloudflareTunnelOptions } from '#index.ts'
 
-// import { CloudflareTunnel } from './index'
-
-/**
- * TODO: figure out how to import the Astro plugin
- */
-
-/**
- * Astro plugin
- *
- * @example
- * ```ts
- * // astro.config.ts
- * import CloudflareTunnel from 'unplugin-cloudflare-tunnel/astro'
- *
- * export default defineConfig({
- *   plugins: [CloudflareTunnel()],
- * })
- * ```
- */
-// const astro = CloudflareTunnel.astro as typeof CloudflareTunnel.astro
-const astro = {} as never
-export default astro
-export { astro as 'module.exports' }
+export default (options: CloudflareTunnelOptions): any => ({
+  name: 'unplugin-cloudflare-tunnel',
+  hooks: {
+    'astro:config:setup': async (astro: any) => {
+      astro.config.vite.plugins ||= []
+      astro.config.vite.plugins.push(unplugin.vite(options))
+    },
+  },
+})
