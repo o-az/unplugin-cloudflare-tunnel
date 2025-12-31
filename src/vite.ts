@@ -19,6 +19,6 @@ import { CloudflareTunnel } from '#index.ts'
  * })
  * ```
  */
-const vite = CloudflareTunnel.vite as typeof CloudflareTunnel.vite
+const vite = CloudflareTunnel.vite
 export default vite
 export { vite as 'module.exports' }

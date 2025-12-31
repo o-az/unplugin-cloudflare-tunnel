@@ -19,6 +19,6 @@ import { CloudflareTunnel } from '#index.ts'
  * }
  * ```
  */
-const rspack = CloudflareTunnel.rspack as typeof CloudflareTunnel.rspack
+const rspack = CloudflareTunnel.rspack
 export default rspack
 export { rspack as 'module.exports' }

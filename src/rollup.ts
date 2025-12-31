@@ -19,6 +19,6 @@ import { CloudflareTunnel } from '#index.ts'
  * }
  * ```
  */
-const rollup = CloudflareTunnel.rollup as typeof CloudflareTunnel.rollup
+const rollup = CloudflareTunnel.rollup
 export default rollup
 export { rollup as 'module.exports' }
