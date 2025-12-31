@@ -2,7 +2,7 @@ import 'dotenv/config'
 import rspack from '@rspack/core'
 import { defineConfig } from '@rspack/cli'
 
-import CloudflareTunnel from '../src/rspack.ts'
+import CloudflareTunnel from '#unplugin-cloudflare-tunnel/rspack'
 
 const apiToken = process.env.CLOUDFLARE_API_KEY
 if (!apiToken) throw new Error('CLOUDFLARE_API_KEY is not set')

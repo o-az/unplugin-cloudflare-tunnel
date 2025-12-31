@@ -19,6 +19,6 @@ import { CloudflareTunnel } from '#index.ts'
  * }
  * ```
  */
-const farm = CloudflareTunnel.farm as typeof CloudflareTunnel.farm
+const farm = CloudflareTunnel.farm
 export default farm
 export { farm as 'module.exports' }

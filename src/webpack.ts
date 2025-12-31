@@ -19,6 +19,6 @@ import { CloudflareTunnel } from '#index.ts'
  * }
  * ```
  */
-const webpack = CloudflareTunnel.webpack as typeof CloudflareTunnel.webpack
+const webpack = CloudflareTunnel.webpack
 export default webpack
 export { webpack as 'module.exports' }

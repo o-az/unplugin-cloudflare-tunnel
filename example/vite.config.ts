@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv, type Plugin } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import CloudflareTunnel from '#unplugin-cloudflare-tunnel/vite'
 
 export default defineConfig(config => {
@@ -19,7 +19,7 @@ export default defineConfig(config => {
         apiToken,
         logLevel: 'fatal',
         logFile: './logs/cloudflare-tunnel_vite.log',
-      }) as Plugin,
+      }),
     ],
     server: {
       port: 420_69,

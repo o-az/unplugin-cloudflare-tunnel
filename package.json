@@ -9,6 +9,8 @@
   },
   "files": [
     "dist",
+    "LICENSE",
+    "README.md",
     "package.json"
   ],
   "main": "./dist/index.mjs",
@@ -66,6 +68,7 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "unplugin-unused": "^0.5.6",
+    "unplugin-utils": "^0.3.1",
     "vite": "^7.3.0",
     "vitest": "^4.0.16",
     "webpack-dev-server": "^5.2.2",
@@ -105,12 +108,6 @@
     "astro": {
       "optional": true
     }
-  },
-  "resolutions": {
-    "zod": "^4.3.3"
-  },
-  "overrides": {
-    "zod": "^4.3.3"
   },
   "engines": {
     "node": ">=20.0"

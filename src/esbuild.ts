@@ -17,6 +17,6 @@ import { CloudflareTunnel } from '#index.ts'
  * build({ plugins: [Starter()] })
 ```
  */
-const esbuild = CloudflareTunnel.esbuild as typeof CloudflareTunnel.esbuild
+const esbuild = CloudflareTunnel.esbuild
 export default esbuild
 export { esbuild as 'module.exports' }
