@@ -9,6 +9,8 @@
   },
   "files": [
     "dist",
+    "LICENSE",
+    "README.md",
     "package.json"
   ],
   "main": "./dist/index.mjs",
@@ -30,8 +32,7 @@
   "typesVersions": {
     "*": {
       "*": [
-        "./dist/*",
-        "./*"
+        "./dist/*"
       ]
     }
   },
@@ -105,12 +106,6 @@
     "astro": {
       "optional": true
     }
-  },
-  "resolutions": {
-    "zod": "^4.3.3"
-  },
-  "overrides": {
-    "zod": "^4.3.3"
   },
   "engines": {
     "node": ">=20.0"
