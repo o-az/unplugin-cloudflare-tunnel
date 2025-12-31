@@ -1,5 +1,11 @@
 # unplugin-cloudflare-tunnel
 
+## 0.0.4
+
+### Patch Changes
+
+- [#8](https://github.com/o-az/unplugin-cloudflare-tunnel/pull/8) [`2747c28`](https://github.com/o-az/unplugin-cloudflare-tunnel/commit/2747c2860d219311f0f5062b3dc8e647d337b6f4) Thanks [@o-az](https://github.com/o-az)! - Actually add missing readme :)
+
 ## 0.0.3
 
 ### Patch Changes
