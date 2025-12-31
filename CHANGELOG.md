@@ -1,5 +1,11 @@
 # unplugin-cloudflare-tunnel
 
+## 0.0.2
+
+### Patch Changes
+
+- [#4](https://github.com/o-az/unplugin-cloudflare-tunnel/pull/4) [`5f39b1a`](https://github.com/o-az/unplugin-cloudflare-tunnel/commit/5f39b1a4917c150761f302311866fe89657f174f) Thanks [@o-az](https://github.com/o-az)! - Added Rspack and Webpack supoort
+
 ## 0.0.1
 
 ### Patch Changes
