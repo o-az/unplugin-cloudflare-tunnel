@@ -5,8 +5,11 @@ import HtmlWebpackPlugin from 'html-webpack-plugin'
 
 import CloudflareTunnel from '../src/webpack.ts'
 
-const apiToken = process.env.CLOUDFLARE_API_KEY
-if (!apiToken) throw new Error('CLOUDFLARE_API_KEY is not set')
+const apiToken = process.env.CLOUDFLARE_API_TOKEN
+if (!apiToken) throw new Error('CLOUDFLARE_API_TOKEN is not set')
+
+const tunnelDnsName = process.env.CLOUDFLARE_TUNNEL_DNS_NAME
+if (!tunnelDnsName) throw new Error('CLOUDFLARE_TUNNEL_DNS_NAME is not set')
 
 export default {
   name: 'unplugin-cloudflare-tunnel Webpack example',
@@ -38,11 +41,11 @@ export default {
       template: './index.html',
     }),
     CloudflareTunnel({
-      tunnelName: 'dev-tunnel',
-      hostname: 'dev.sauce.wiki',
-      ssl: '*.sauce.wiki',
       apiToken,
       logLevel: 'fatal',
+      tunnelName: 'dev-tunnel',
+      ssl: `*.${tunnelDnsName}`,
+      hostname: `dev.${tunnelDnsName}`,
       logFile: './logs/cloudflare-tunnel_webpack.log',
     }),
   ],

@@ -177,7 +177,7 @@ interface NamedTunnelOptions extends BaseTunnelOptions {
    *
    * Fallback priority:
    * 1. Provided apiToken option
-   * 2. CLOUDFLARE_API_KEY environment variable
+   * 2. CLOUDFLARE_API_TOKEN environment variable
    */
   apiToken?: string
 
@@ -1205,12 +1205,12 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
       // Named tunnel mode logic
       debugLog('[unplugin-cloudflare-tunnel] Starting named tunnel mode...')
 
-      const apiToken = providedApiToken || process.env.CLOUDFLARE_API_KEY
+      const apiToken = providedApiToken || process.env.CLOUDFLARE_API_TOKEN
 
       if (!apiToken) {
         throw new Error(
           '[unplugin-cloudflare-tunnel] API token is required. ' +
-            "Provide it via 'apiToken' option or set the CLOUDFLARE_API_KEY environment variable. " +
+            "Provide it via 'apiToken' option or set the CLOUDFLARE_API_TOKEN environment variable. " +
             'Get your token at: https://dash.cloudflare.com/profile/api-tokens',
         )
       }
