@@ -87,6 +87,7 @@ async function publish(registry: string) {
   }
 
   console.info(stdout.toString())
+  console.info(`New tag: ${pkgJson.name}@${pkgJson.version}`)
   console.info('Published successfully')
 }
 
