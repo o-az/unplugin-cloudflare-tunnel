@@ -2,7 +2,6 @@
 
 exports[`rollup > basic.js 1`] = `
 "// basic.js
-// unplugin-starter injected
 const num = 10;
 
 export { num };

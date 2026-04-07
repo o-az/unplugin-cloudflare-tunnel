@@ -41,7 +41,7 @@
     }
   },
   "files": [
-    "main.ts",
+    "main.mjs",
     "reset.d.ts",
     "package.json",
     "vite-env.d.ts",
