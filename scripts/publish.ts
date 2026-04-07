@@ -83,7 +83,11 @@ async function publish(registry: string) {
 
   if (exitCode !== 0) {
     const stderrStr = stderr.toString()
-    if (stderrStr.includes('You cannot publish over the previously published versions')) {
+    if (
+      stderrStr.includes(
+        'You cannot publish over the previously published versions',
+      )
+    ) {
       console.info(`Version ${pkgJson.version} already published, skipping`)
       return
     }
