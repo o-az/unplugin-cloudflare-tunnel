@@ -1,5 +1,11 @@
 # unplugin-cloudflare-tunnel
 
+## 0.0.5
+
+### Patch Changes
+
+- [#10](https://github.com/o-az/unplugin-cloudflare-tunnel/pull/10) [`2f195ed`](https://github.com/o-az/unplugin-cloudflare-tunnel/commit/2f195ed1d7d4cf4bcebf486490076b7dec9901e8) Thanks [@o-az](https://github.com/o-az)! - updated deps
+
 ## 0.0.4
 
 ### Patch Changes
