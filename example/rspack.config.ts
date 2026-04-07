@@ -2,7 +2,7 @@ import 'dotenv/config'
 import rspack from '@rspack/core'
 import { defineConfig } from '@rspack/cli'
 
-import CloudflareTunnel from '#unplugin-cloudflare-tunnel/rspack'
+import CloudflareTunnel from '../src/rspack.ts'
 
 const apiToken = process.env.CLOUDFLARE_API_TOKEN
 if (!apiToken) throw new Error('CLOUDFLARE_API_TOKEN is not set')
@@ -15,7 +15,7 @@ export default defineConfig({
   devServer: {
     port: 420_69,
   },
-  entry: './main.ts',
+  entry: './main.mjs',
   mode: 'development',
   plugins: [
     new rspack.HtmlRspackPlugin({ template: './index.html' }),

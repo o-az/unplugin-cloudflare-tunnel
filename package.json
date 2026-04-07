@@ -46,7 +46,7 @@
     "publint": "bun x publint@latest run --pack bun --strict",
     "attw": "bun x @arethetypeswrong/cli@latest --pack . --ignore-rules='false-cjs' --ignore-rules='cjs-resolves-to-esm'",
     "prepublishOnly": "bun run build",
-    "postinstall": "simple-git-hooks"
+    "prepare": "simple-git-hooks"
   },
   "dependencies": {
     "cloudflared": "^0.7.1",

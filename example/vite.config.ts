@@ -1,5 +1,5 @@
 import { defineConfig, loadEnv } from 'vite'
-import CloudflareTunnel from '#unplugin-cloudflare-tunnel/vite'
+import CloudflareTunnel from '../src/vite.ts'
 
 export default defineConfig(config => {
   const env = loadEnv(config.mode, process.cwd(), '')

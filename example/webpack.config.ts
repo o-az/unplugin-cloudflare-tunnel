@@ -17,10 +17,10 @@ export default {
     port: 88_11,
   },
   dotenv: true,
-  entry: './main.ts',
+  entry: './main.mjs',
   mode: 'development',
   resolve: {
-    extensions: ['.ts', '.js'],
+    extensions: ['.ts', '.js', '.mjs'],
   },
   module: {
     rules: [
@@ -47,6 +47,6 @@ export default {
       ssl: `*.${tunnelDnsName}`,
       hostname: `dev.${tunnelDnsName}`,
       logFile: './logs/cloudflare-tunnel_webpack.log',
-    }),
+    }) as unknown as webpack.WebpackPluginInstance,
   ],
 } satisfies webpack.Configuration
