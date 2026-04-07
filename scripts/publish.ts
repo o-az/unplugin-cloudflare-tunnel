@@ -65,14 +65,16 @@ async function publish(registry: string) {
     pkgJson.version.includes('beta') ||
     pkgJson.version.includes('rc')
 
+  const extraArgs: string[] = []
+  if (values['dry-run']) extraArgs.push('--dry-run')
+  if (isPrerelease) extraArgs.push('--tag=next')
+
   const { stderr, stdout, exitCode } = await Bun.$ /* sh */`
     npm publish ${packedFile} \
       --access="public" \
       --verbose \
-      --no-git-checks \
       --registry="${registry}" \
-      ${values['dry-run'] ? '--dry-run' : ''} \
-      ${isPrerelease ? '--tag=next' : ''}`
+      ${extraArgs}`
     .env({
       ...Bun.env,
       NODE_ENV: 'production',
