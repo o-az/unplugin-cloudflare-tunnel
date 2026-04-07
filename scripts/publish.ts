@@ -82,7 +82,12 @@ async function publish(registry: string) {
     .nothrow()
 
   if (exitCode !== 0) {
-    console.error(`Non-zero exit code: ${exitCode}`, stderr.toString())
+    const stderrStr = stderr.toString()
+    if (stderrStr.includes('You cannot publish over the previously published versions')) {
+      console.info(`Version ${pkgJson.version} already published, skipping`)
+      return
+    }
+    console.error(`Non-zero exit code: ${exitCode}`, stderrStr)
     NodeProcess.exit(1)
   }
 
