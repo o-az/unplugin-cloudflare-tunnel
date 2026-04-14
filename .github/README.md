@@ -29,16 +29,80 @@ npm add unplugin-cloudflare-tunnel
 
 ## Usage
 
+### Modes
+
+The plugin supports two modes:
+
+- **Quick mode**: temporary `trycloudflare.com` URL, no Cloudflare credentials required
+- **Named mode**: persistent tunnel on your own hostname
+
+Mode selection rules:
+
+- `mode: 'quick'` → always quick mode
+- `mode: 'named'` → always named mode, requires `hostname`
+- if `mode` is omitted:
+  - `hostname` provided → named mode
+  - otherwise → quick mode
+
+### Common options
+
+- `mode?: 'quick' | 'named'`
+- `protocol?: 'http2' | 'quic'` — defaults to `http2` for better local dev reliability
+- `logLevel?: 'debug' | 'info' | 'warn' | 'error' | 'fatal'`
+- `port?: number`
+- `logFile?: string`
+- `debug?: boolean`
+- `enabled?: boolean`
+
+### Quick mode example
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite'
+import CloudflareTunnel from 'unplugin-cloudflare-tunnel/vite'
+
+export default defineConfig({
+  plugins: [
+    CloudflareTunnel({
+      mode: 'quick',
+      protocol: 'http2',
+    }),
+  ],
+})
+```
+
+### Named mode example
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite'
+import CloudflareTunnel from 'unplugin-cloudflare-tunnel/vite'
+
+export default defineConfig({
+  plugins: [
+    CloudflareTunnel({
+      mode: 'named',
+      hostname: 'dev.example.com',
+      apiToken: process.env.CLOUDFLARE_API_TOKEN,
+      protocol: 'http2',
+    }),
+  ],
+})
+```
+
 <details>
 <summary>Vite</summary><br>
 
 ```ts
 // vite.config.ts
+import { defineConfig } from 'vite'
 import CloudflareTunnel from 'unplugin-cloudflare-tunnel/vite'
 
 export default defineConfig({
   plugins: [
-    CloudflareTunnel(),
+    CloudflareTunnel({
+      mode: 'quick',
+    }),
   ],
 })
 ```
@@ -133,6 +197,12 @@ Or create a `virtual.d.ts` file in your project:
 - **Quick tunnel mode**: Returns a random URL like `https://abc-123.trycloudflare.com`
 - **Named tunnel mode**: Returns your custom domain URL like `https://dev.example.com`
 - **Plugin disabled**: Returns an empty string `""`
+
+### Notes on modes
+
+- Named-only options such as `hostname`, `apiToken`, `accountId`, `zoneId`, `tunnelName`, `dns`, `ssl`, and `cleanup` are only valid in named mode.
+- Quick mode ignores Cloudflare account setup entirely and creates an ephemeral tunnel.
+- `protocol` applies to both quick and named modes.
 
 ### Notes
 
