@@ -1044,43 +1044,74 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
   }
 
   const killCloudflared = (signal: NodeJS.Signals = 'SIGTERM') => {
-    if (!child || child.killed) return
+    if (!child || child.killed) return Promise.resolve()
 
     globalState.shuttingDown = true
     globalState.tunnelUrl = undefined
 
-    try {
-      debugLog(
-        `[unplugin-cloudflare-tunnel] Terminating cloudflared process (PID: ${child.pid}) with ${signal}...`,
-      )
-      const killed = child.kill(signal)
+    const activeChild = child
 
-      if (!killed && process.platform === 'win32') {
-        NodeChildProcess.exec(`taskkill /pid ${child.pid} /T /F`, () => {})
+    return new Promise<void>(resolve => {
+      let settled = false
+      let forceKillTimer: ReturnType<typeof setTimeout> | undefined
+
+      const settle = () => {
+        if (settled) return
+        settled = true
+        if (forceKillTimer) {
+          clearTimeout(forceKillTimer)
+        }
+        resolve()
       }
 
-      if (signal === 'SIGTERM') {
-        setTimeout(() => {
-          if (child && !child.killed) {
-            debugLog(
-              '[unplugin-cloudflare-tunnel] Force killing cloudflared process...',
-            )
-            if (process.platform === 'win32') {
-              NodeChildProcess.exec(
-                `taskkill /pid ${child.pid} /T /F`,
-                () => {},
+      activeChild.once('exit', () => {
+        settle()
+      })
+
+      try {
+        debugLog(
+          `[unplugin-cloudflare-tunnel] Terminating cloudflared process (PID: ${activeChild.pid}) with ${signal}...`,
+        )
+        const killed = activeChild.kill(signal)
+
+        if (!killed && process.platform === 'win32') {
+          NodeChildProcess.exec(`taskkill /pid ${activeChild.pid} /T /F`, () =>
+            settle(),
+          )
+        }
+
+        if (signal === 'SIGTERM') {
+          forceKillTimer = setTimeout(() => {
+            if (!activeChild.killed) {
+              debugLog(
+                '[unplugin-cloudflare-tunnel] Force killing cloudflared process...',
               )
+              if (process.platform === 'win32') {
+                NodeChildProcess.exec(
+                  `taskkill /pid ${activeChild.pid} /T /F`,
+                  () => settle(),
+                )
+              } else {
+                try {
+                  activeChild.kill('SIGKILL')
+                } catch {
+                  settle()
+                }
+              }
             } else {
-              child.kill('SIGKILL')
+              settle()
             }
-          }
-        }, 2000)
+          }, 2000)
+        } else if (!killed) {
+          settle()
+        }
+      } catch (error) {
+        debugLog(
+          `[unplugin-cloudflare-tunnel] Note: Error killing cloudflared: ${error}`,
+        )
+        settle()
       }
-    } catch (error) {
-      debugLog(
-        `[unplugin-cloudflare-tunnel] Note: Error killing cloudflared: ${error}`,
-      )
-    }
+    })
   }
 
   let exitHandlersRegistered = globalState.exitHandlersRegistered ?? false
@@ -1126,8 +1157,9 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
         '[unplugin-cloudflare-tunnel] Unhandled rejection, cleaning up cloudflared...',
         reason,
       )
-      killCloudflared('SIGTERM')
-      scheduleFatalExit(1)
+      void killCloudflared('SIGTERM').finally(() => {
+        scheduleFatalExit(1)
+      })
     })
   }
 
