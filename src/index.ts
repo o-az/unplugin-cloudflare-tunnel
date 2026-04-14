@@ -131,6 +131,16 @@ export type DNSRecord = z.infer<typeof DNSRecordSchema>
  */
 interface BaseTunnelOptions {
   /**
+   * Tunnel mode.
+   * - `quick`: temporary `trycloudflare.com` URL, no hostname required
+   * - `named`: persistent tunnel using your configured hostname
+   *
+   * When omitted, the plugin uses named mode if `hostname` is provided,
+   * otherwise it uses quick mode.
+   */
+  mode?: 'quick' | 'named'
+
+  /**
    * Local port your dev server listens on
    * If not specified, will automatically use the bundler's configured port
    * @default undefined (auto-detect from bundler config)
@@ -259,8 +269,8 @@ interface QuickTunnelOptions extends BaseTunnelOptions {
  * Configuration options for the Cloudflare Tunnel plugin
  *
  * Two modes are supported:
- * - Named tunnel mode: Provide `hostname` for a persistent tunnel with custom domain
- * - Quick tunnel mode: Omit `hostname` for a temporary tunnel with random trycloudflare.com URL
+ * - Named tunnel mode: set `mode: 'named'` or provide `hostname`
+ * - Quick tunnel mode: set `mode: 'quick'` or omit `hostname`
  */
 export type CloudflareTunnelOptions = NamedTunnelOptions | QuickTunnelOptions
 
@@ -327,7 +337,23 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
   // ---------------------------------------------------------------------
   // Extract and validate options
   // ---------------------------------------------------------------------
-  const isQuickMode = !('hostname' in options)
+  const requestedMode = options.mode
+
+  if (requestedMode && !['quick', 'named'].includes(requestedMode)) {
+    throw new Error(
+      "[unplugin-cloudflare-tunnel] mode must be one of: 'quick', 'named'",
+    )
+  }
+
+  const hasHostname =
+    'hostname' in options && typeof options.hostname === 'string'
+  const isQuickMode = requestedMode ? requestedMode === 'quick' : !hasHostname
+
+  if (requestedMode === 'named' && !hasHostname) {
+    throw new Error(
+      '[unplugin-cloudflare-tunnel] hostname is required when mode is set to named',
+    )
+  }
 
   // Validate that quick mode options don't include named-mode-only options
   if (isQuickMode) {
@@ -343,8 +369,8 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
     const invalidOptions = namedModeOptions.filter(opt => opt in options)
     if (invalidOptions.length > 0) {
       throw new Error(
-        `[unplugin-cloudflare-tunnel] The following options are only supported in named tunnel mode (when hostname is provided): ${invalidOptions.join(', ')}. ` +
-          `Either provide a hostname for named tunnel mode, or remove these options for quick tunnel mode.`,
+        `[unplugin-cloudflare-tunnel] The following options are only supported in named tunnel mode: ${invalidOptions.join(', ')}. ` +
+          `Set mode to 'named' and provide a hostname, or remove these options for quick tunnel mode.`,
       )
     }
   }
@@ -892,6 +918,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
   const spawnQuickTunnel = async (
     localTarget: string,
+    protocol: 'http2' | 'quic',
   ): Promise<{
     child: ReturnType<typeof NodeChildProcess.spawn>
     url: string
@@ -901,6 +928,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
     if (logFile) {
       cloudflaredArgs.push('--logfile', logFile)
     }
+    cloudflaredArgs.push('--protocol', protocol)
     cloudflaredArgs.push('--url', localTarget)
 
     debugLog('Spawning quick tunnel:', bin, cloudflaredArgs)
@@ -1213,7 +1241,10 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
         debugLog('← Quick tunnel connecting to local target', localTarget)
 
         try {
-          const { child: quickChild, url } = await spawnQuickTunnel(localTarget)
+          const { child: quickChild, url } = await spawnQuickTunnel(
+            localTarget,
+            protocol,
+          )
           tunnelUrl = url
           child = quickChild
 
@@ -1256,8 +1287,10 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
                   actualPort ?? port,
                 )
 
-                const { child: newChild, url: newUrl } =
-                  await spawnQuickTunnel(newLocalTarget)
+                const { child: newChild, url: newUrl } = await spawnQuickTunnel(
+                  newLocalTarget,
+                  protocol,
+                )
                 tunnelUrl = newUrl
                 child = newChild
                 globalState.child = child
