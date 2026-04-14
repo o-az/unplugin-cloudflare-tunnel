@@ -50,15 +50,23 @@ export const DNSRecordSchema = z.object({
 /* Utility functions                                                          */
 /* -------------------------------------------------------------------------- */
 
+function normalizeHost(host: string | undefined): string {
+  if (!host || host === '0.0.0.0' || host === '::' || host === '::0') {
+    return 'localhost'
+  }
+  return host
+}
+
 export function normalizeAddress(
   address: string | { address?: string; port?: number } | null | undefined,
 ): { host: string; port?: number } {
   if (address && typeof address === 'object') {
     return {
-      host:
+      host: normalizeHost(
         'address' in address && address.address
           ? (address as any).address
-          : 'localhost',
+          : undefined,
+      ),
       port:
         'port' in address && typeof (address as any).port === 'number'
           ? (address as any).port

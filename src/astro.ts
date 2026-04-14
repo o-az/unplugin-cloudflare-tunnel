@@ -4,6 +4,7 @@ export default (options: CloudflareTunnelOptions): any => ({
   name: 'unplugin-cloudflare-tunnel',
   hooks: {
     'astro:config:setup': async (astro: any) => {
+      astro.config.vite ||= {}
       astro.config.vite.plugins ||= []
       astro.config.vite.plugins.push(unplugin.vite(options))
     },

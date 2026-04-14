@@ -1085,6 +1085,13 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
   let exitHandlersRegistered = globalState.exitHandlersRegistered ?? false
 
+  const scheduleFatalExit = (code = 1) => {
+    process.exitCode = code
+    setImmediate(() => {
+      process.exit(code)
+    })
+  }
+
   const registerExitHandler = () => {
     if (exitHandlersRegistered) return
     exitHandlersRegistered = true
@@ -1106,7 +1113,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
       })
     })
 
-    process.once('uncaughtException', error => {
+    process.once('uncaughtExceptionMonitor', error => {
       console.error(
         '[unplugin-cloudflare-tunnel] Uncaught exception, cleaning up cloudflared...',
         error,
@@ -1120,6 +1127,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
         reason,
       )
       killCloudflared('SIGTERM')
+      scheduleFatalExit(1)
     })
   }
 
@@ -2205,15 +2213,23 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 /* Utility functions                                                          */
 /* -------------------------------------------------------------------------- */
 
+function normalizeHost(host: string | undefined): string {
+  if (!host || host === '0.0.0.0' || host === '::' || host === '::0') {
+    return 'localhost'
+  }
+  return host
+}
+
 function normalizeAddress(
   address: string | { address?: string; port?: number } | null | undefined,
 ): { host: string; port?: number } {
   if (address && typeof address === 'object') {
     return {
-      host:
+      host: normalizeHost(
         'address' in address && address.address
           ? (address as any).address
-          : 'localhost',
+          : undefined,
+      ),
       port:
         'port' in address && typeof (address as any).port === 'number'
           ? (address as any).port
