@@ -22,6 +22,7 @@ import type * as NodeHTTP from 'node:http'
 import type * as NodeHTTPS from 'node:https'
 import type * as NodeHTTP2 from 'node:http2'
 import * as NodeChildProcess from 'node:child_process'
+import * as NodeUtil from 'node:util'
 
 const PLUGIN_NAME = 'unplugin-cloudflare-tunnel'
 
@@ -90,6 +91,11 @@ const AccountSchema = z.object({
 const ZoneSchema = z.object({
   id: z.string(),
   name: z.string(),
+  account: z.optional(
+    z.object({
+      id: z.string(),
+    }),
+  ),
 })
 
 const TunnelSchema = z.object({
@@ -138,10 +144,20 @@ interface BaseTunnelOptions {
   logFile?: string
 
   /**
-   * Log level for cloudflared process
-   * @default undefined (uses cloudflared default)
+   * Log level for cloudflared output shown by the plugin.
+   * The plugin still runs cloudflared with at least `info` internally so it can
+   * detect tunnel readiness and print the tunnel URL.
+   * @default undefined
    */
   logLevel?: 'debug' | 'info' | 'warn' | 'error' | 'fatal'
+
+  /**
+   * Transport protocol used by cloudflared.
+   * `http2` is the default because it is more reliable for local development
+   * networks than QUIC.
+   * @default 'http2'
+   */
+  protocol?: 'http2' | 'quic'
 
   /**
    * Enable additional verbose logging for easier debugging.
@@ -359,15 +375,63 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
   }
 
   // Extract common options
-  const { port: userProvidedPort, logFile, logLevel, debug = false } = options
+  const {
+    port: userProvidedPort,
+    logFile,
+    logLevel,
+    protocol = 'http2',
+    debug = false,
+  } = options
 
   const effectivePluginLogLevel: LogLevel =
     (logLevel as LogLevel) ?? (debug ? 'debug' : 'info')
 
+  const redactForDebug = (value: unknown): unknown => {
+    if (typeof value === 'string') {
+      if (value.startsWith('eyJ') && value.length > 40) {
+        return '[REDACTED_TOKEN]'
+      }
+      return value
+    }
+
+    if (Array.isArray(value)) {
+      return value.map(item => redactForDebug(item))
+    }
+
+    if (value && typeof value === 'object') {
+      const entries = Object.entries(value as Record<string, unknown>).map(
+        ([key, nestedValue]) => {
+          if (/token|authorization|secret|password/i.test(key)) {
+            return [key, '[REDACTED]']
+          }
+          return [key, redactForDebug(nestedValue)]
+        },
+      )
+      return Object.fromEntries(entries)
+    }
+
+    return value
+  }
+
+  const formatDebugValue = (value: unknown) => {
+    const redactedValue = redactForDebug(value)
+    if (typeof redactedValue === 'string') return redactedValue
+    return NodeUtil.inspect(redactedValue, {
+      depth: null,
+      colors: supportsColor(),
+      compact: false,
+      breakLength: 120,
+      sorted: true,
+    })
+  }
+
   const pluginLog = {
     debug: (...args: unknown[]) => {
       if (debug || effectivePluginLogLevel === 'debug') {
-        console.log('[cloudflare-tunnel:debug]', ...args)
+        console.log(
+          '[cloudflare-tunnel:debug]',
+          ...args.map(arg => formatDebugValue(arg)),
+        )
       }
     },
     info: (message: string) => {
@@ -475,8 +539,6 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
     out.push(rule)
     out.push(center(colorize('Tunnel URL', ANSI.bold)))
     out.push(center(urlLine))
-    out.push(center(urlLine))
-    out.push(center(urlLine))
     if (localLine) {
       out.push('')
       out.push(center(colorize('Local', ANSI.dim + ANSI.bold)))
@@ -530,7 +592,14 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
   const effectiveLogLevel: 'debug' | 'info' | 'warn' | 'error' | 'fatal' =
     (logLevel as any) ?? (debug ? 'info' : 'warn')
-  debugLog('Effective cloudflared log level:', effectiveLogLevel)
+  const cloudflaredProcessLogLevel: 'debug' | 'info' =
+    effectiveLogLevel === 'debug' ? 'debug' : 'info'
+  debugLog('Effective cloudflared log level filter:', effectiveLogLevel)
+  debugLog(
+    'Effective cloudflared process log level:',
+    cloudflaredProcessLogLevel,
+  )
+  debugLog('Effective cloudflared protocol:', protocol)
 
   if (dnsOption) {
     const isDnsWildcard = dnsOption.startsWith('*.')
@@ -548,6 +617,12 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
         "[unplugin-cloudflare-tunnel] ssl option must either be a wildcard (e.g., '*.example.com') or exactly match the hostname",
       )
     }
+  }
+
+  if (!['http2', 'quic'].includes(protocol)) {
+    throw new Error(
+      "[unplugin-cloudflare-tunnel] protocol must be one of: 'http2', 'quic'",
+    )
   }
 
   // ---------------------------------------------------------------------
@@ -842,9 +917,29 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
     return new Promise((resolve, reject) => {
       let urlFound = false
+      let settled = false
+
+      const rejectOnce = (error: Error) => {
+        if (settled) return
+        settled = true
+        reject(error)
+      }
+
+      const resolveOnce = (result: {
+        child: ReturnType<typeof NodeChildProcess.spawn>
+        url: string
+      }) => {
+        if (settled) return
+        settled = true
+        resolve(result)
+      }
+
       const timeout = setTimeout(() => {
         if (!urlFound) {
-          reject(
+          try {
+            child.kill('SIGTERM')
+          } catch {}
+          rejectOnce(
             new Error('Quick tunnel URL not found in output within 30 seconds'),
           )
         }
@@ -874,7 +969,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
         if (urlMatch && !urlFound) {
           urlFound = true
           clearTimeout(timeout)
-          resolve({ child, url: urlMatch[0] })
+          resolveOnce({ child, url: urlMatch[0] })
         }
 
         if (
@@ -902,7 +997,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
       child.on('error', error => {
         clearTimeout(timeout)
-        reject(
+        rejectOnce(
           new Error(`Failed to start quick tunnel process: ${error.message}`),
         )
       })
@@ -910,7 +1005,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
       child.on('exit', (code, signal) => {
         clearTimeout(timeout)
         if (!urlFound) {
-          reject(
+          rejectOnce(
             new Error(
               `Quick tunnel process exited before URL was found (code: ${code}, signal: ${signal})`,
             ),
@@ -1124,6 +1219,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
           globalState.child = child
           globalState.configHash = newConfigHash
+          globalState.tunnelUrl = Promise.resolve(url)
 
           registerExitHandler()
 
@@ -1165,6 +1261,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
                 tunnelUrl = newUrl
                 child = newChild
                 globalState.child = child
+                globalState.tunnelUrl = Promise.resolve(newUrl)
 
                 announceTunnel({
                   key: `quick:${newUrl}:${actualPort ?? port}`,
@@ -1221,21 +1318,11 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
       await ensureCloudflaredBinary(bin)
 
-      const accounts = await cf(
-        apiToken,
-        'GET',
-        '/accounts',
-        undefined,
-        z.array(AccountSchema),
-      )
-      const accountId = forcedAccount || accounts[0]?.id
-      if (!accountId)
-        throw new Error('Unable to determine Cloudflare account ID')
-
       const apexDomain = hostname!.split('.').slice(-2).join('.')
       const parentDomain = hostname!.split('.').slice(1).join('.')
       debugLog('← Apex domain', apexDomain)
       debugLog('← Parent domain', parentDomain)
+      let resolvedZone: Zone | undefined
       let zoneId: string | undefined = forcedZone
       if (!zoneId) {
         let zones: Zone[] = []
@@ -1259,8 +1346,24 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
             z.array(ZoneSchema),
           )
         }
-        zoneId = zones[0]?.id
+        resolvedZone = zones[0]
+        zoneId = resolvedZone?.id
       }
+
+      let accountId = forcedAccount || resolvedZone?.account?.id
+      if (!accountId) {
+        const accounts = await cf(
+          apiToken,
+          'GET',
+          '/accounts',
+          undefined,
+          z.array(AccountSchema),
+        )
+        accountId = accounts[0]?.id
+      }
+      if (!accountId)
+        throw new Error('Unable to determine Cloudflare account ID')
+
       if (!zoneId)
         throw new Error(`Zone ${apexDomain} not found in account ${accountId}`)
 
@@ -1559,30 +1662,18 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
         throw sslError
       }
 
-      const cloudflaredArgs = ['tunnel']
-      cloudflaredArgs.push('--loglevel', effectiveLogLevel)
-      if (logFile) {
-        cloudflaredArgs.push('--logfile', logFile)
-      }
-
-      debugLog('Spawning cloudflared', bin, cloudflaredArgs)
-      cloudflaredArgs.push('run', '--token', token)
-      child = NodeChildProcess.spawn(bin, cloudflaredArgs, {
-        stdio: ['ignore', 'pipe', 'pipe'],
-        detached: false,
-        windowsHide: true,
-        shell: process.platform === 'win32',
-      })
-      debugLog(
-        `[unplugin-cloudflare-tunnel] Process spawned with PID: ${child.pid}`,
-      )
-
-      globalState.child = child
-      globalState.configHash = newConfigHash
-
-      registerExitHandler()
-
       let tunnelReady = false
+      let localTargetForAnnouncement = localTarget
+      let activeTunnelProtocol: 'quic' | 'http2' | undefined
+
+      const announceNamedTunnelIfReady = () => {
+        if (!tunnelReady) return
+        announceTunnel({
+          key: `named:${hostname}:${localTargetForAnnouncement}`,
+          url: `https://${hostname}`,
+          localTarget: localTargetForAnnouncement,
+        })
+      }
 
       const logCloudflaredLines = (kind: 'stdout' | 'stderr', text: string) => {
         if (globalState.shuttingDown && !debug) return
@@ -1614,74 +1705,115 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
         }
       }
 
-      child.stdout?.on('data', data => {
-        const output = data.toString()
-        logCloudflaredLines('stdout', output)
-        if (output.includes('Connection') && output.includes('registered')) {
-          if (!tunnelReady) {
-            tunnelReady = true
-            pluginLog.info(`Tunnel connected for https://${hostname}`)
-          }
+      const spawnNamedTunnelProcess = (protocol: 'quic' | 'http2') => {
+        const cloudflaredArgs = ['tunnel']
+        cloudflaredArgs.push('--loglevel', cloudflaredProcessLogLevel)
+        if (logFile) {
+          cloudflaredArgs.push('--logfile', logFile)
         }
-      })
+        cloudflaredArgs.push('--protocol', protocol)
 
-      child.stderr?.on('data', data => {
-        const error = data.toString().trim()
-
-        if (
-          error.includes('Failed to parse ICMP reply') ||
-          error.includes('unknow ip version 0')
-        ) {
-          if (logLevel === 'debug') {
-            console.log(`[cloudflared debug] ${error}`)
-          }
-          return
-        }
-
-        logCloudflaredLines('stderr', error)
-      })
-
-      child.on('error', error => {
-        console.error(
-          `[unplugin-cloudflare-tunnel] ❌ Failed to start tunnel process: ${error.message}`,
+        debugLog('Spawning cloudflared', bin, cloudflaredArgs)
+        const spawnedChild = NodeChildProcess.spawn(
+          bin,
+          [...cloudflaredArgs, 'run', '--token', token],
+          {
+            stdio: ['ignore', 'pipe', 'pipe'],
+            detached: false,
+            windowsHide: true,
+            shell: process.platform === 'win32',
+          },
         )
-        if (error.message.includes('ENOENT')) {
-          console.error(
-            `[unplugin-cloudflare-tunnel] Hint: cloudflared binary may not be installed correctly`,
-          )
-        }
-      })
 
-      child.on('exit', (code, signal) => {
-        if (code !== 0 && code !== null) {
+        child = spawnedChild
+        globalState.child = spawnedChild
+        globalState.configHash = newConfigHash
+
+        debugLog(
+          `[unplugin-cloudflare-tunnel] Process spawned with PID: ${spawnedChild.pid}`,
+        )
+
+        const handleCloudflaredOutput = (
+          kind: 'stdout' | 'stderr',
+          text: string,
+        ) => {
+          if (
+            text.includes('Failed to parse ICMP reply') ||
+            text.includes('unknow ip version 0')
+          ) {
+            if (logLevel === 'debug') {
+              console.log(`[cloudflared debug] ${text.trim()}`)
+            }
+            return
+          }
+
+          logCloudflaredLines(kind, text)
+
+          if (
+            /registered tunnel connection|connection.*registered/i.test(text)
+          ) {
+            activeTunnelProtocol = protocol
+            if (!tunnelReady) {
+              tunnelReady = true
+              pluginLog.info(
+                `Tunnel connected for https://${hostname} via ${protocol.toUpperCase()}`,
+              )
+            }
+            announceNamedTunnelIfReady()
+          }
+        }
+
+        spawnedChild.stdout?.on('data', data => {
+          handleCloudflaredOutput('stdout', data.toString())
+        })
+
+        spawnedChild.stderr?.on('data', data => {
+          handleCloudflaredOutput('stderr', data.toString())
+        })
+
+        spawnedChild.on('error', error => {
           console.error(
-            `[unplugin-cloudflare-tunnel] ❌ Tunnel process exited with code ${code}`,
+            `[unplugin-cloudflare-tunnel] ❌ Failed to start tunnel process: ${error.message}`,
           )
-          if (signal) {
+          if (error.message.includes('ENOENT')) {
             console.error(
-              `[unplugin-cloudflare-tunnel] Process terminated by signal: ${signal}`,
+              `[unplugin-cloudflare-tunnel] Hint: cloudflared binary may not be installed correctly`,
             )
           }
-        } else if (code === 0) {
-          console.log(
-            `[unplugin-cloudflare-tunnel] ✅ Tunnel process exited cleanly`,
-          )
-        }
-      })
+        })
+
+        spawnedChild.on('exit', (code, signal) => {
+          if (globalState.child !== spawnedChild) return
+
+          if (code !== 0 && code !== null) {
+            console.error(
+              `[unplugin-cloudflare-tunnel] ❌ Tunnel process exited with code ${code}`,
+            )
+            if (signal) {
+              console.error(
+                `[unplugin-cloudflare-tunnel] Process terminated by signal: ${signal}`,
+              )
+            }
+          } else if (code === 0) {
+            console.log(
+              `[unplugin-cloudflare-tunnel] ✅ Tunnel process exited cleanly`,
+            )
+          }
+        })
+      }
+
+      spawnNamedTunnelProcess(protocol)
+      registerExitHandler()
 
       registerListeningHandler(() => {
         const { host: actualServerHost, port: actualPort } = normalizeAddress(
           server.httpServer?.address(),
         )
-        const actualLocalTarget = getLocalTarget(
+        localTargetForAnnouncement = getLocalTarget(
           actualServerHost,
           actualPort ?? port,
         )
-        announceTunnel({
-          key: `named:${hostname}:${actualPort ?? port}`,
-          url: `https://${hostname}`,
-          localTarget: actualLocalTarget,
-        })
+        announceNamedTunnelIfReady()
       })
 
       server.httpServer?.once('close', () => {
@@ -1704,6 +1836,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
               actualServerHost,
               actualPort ?? port,
             )
+            localTargetForAnnouncement = newLocalTarget
 
             debugLog('← Updating local target to', newLocalTarget)
 
@@ -1733,6 +1866,12 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
               sslOption,
             })
             globalState.configHash = updatedConfigHash
+            if (tunnelReady && activeTunnelProtocol) {
+              pluginLog.info(
+                `Tunnel remains connected via ${activeTunnelProtocol.toUpperCase()} after port update`,
+              )
+            }
+            announceNamedTunnelIfReady()
           }
         } catch (error) {
           console.error(
@@ -1814,6 +1953,26 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
       debugLog(
         `[unplugin-cloudflare-tunnel] Configured ${label} devServer.allowedHosts to include ${hostToAllow}`,
       )
+    }
+  }
+
+  const ensureViteAllowedHosts = (serverConfig: Record<string, any>) => {
+    const hostToAllow = isQuickMode ? '.trycloudflare.com' : hostname
+    if (!hostToAllow) return
+
+    const current = serverConfig.allowedHosts
+    if (current === true) return
+
+    if (typeof current === 'undefined') {
+      serverConfig.allowedHosts = [hostToAllow]
+    } else if (typeof current === 'string') {
+      if (current !== hostToAllow) {
+        serverConfig.allowedHosts = [current, hostToAllow]
+      }
+    } else if (Array.isArray(current)) {
+      if (!current.includes(hostToAllow)) {
+        current.push(hostToAllow)
+      }
     }
   }
 
@@ -1973,23 +2132,12 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
         if (!config.server) config.server = {}
 
-        if (isQuickMode) {
-          config.server.allowedHosts = ['.trycloudflare.com']
-          return
-        }
+        ensureViteAllowedHosts(config.server)
 
-        if (!config.server.allowedHosts) {
-          config.server.allowedHosts = [hostname!]
+        if (!isQuickMode) {
           debugLog(
             `[unplugin-cloudflare-tunnel] Configured Vite to allow requests from ${hostname}`,
           )
-        } else if (Array.isArray(config.server.allowedHosts)) {
-          if (!config.server.allowedHosts.includes(hostname!)) {
-            config.server.allowedHosts.push(hostname!)
-            debugLog(
-              `[unplugin-cloudflare-tunnel] Added ${hostname} to allowed hosts`,
-            )
-          }
         }
       },
 

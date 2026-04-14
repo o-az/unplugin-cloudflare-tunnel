@@ -22,6 +22,11 @@ export const AccountSchema = z.object({
 export const ZoneSchema = z.object({
   id: z.string(),
   name: z.string(),
+  account: z.optional(
+    z.object({
+      id: z.string(),
+    }),
+  ),
 })
 
 export const TunnelSchema = z.object({
