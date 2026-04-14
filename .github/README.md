@@ -1,6 +1,6 @@
 # unplugin-cloudflare-tunnel
 
-[![NPM version](https://img.shields.io/npm/v/unplugin-cloudflare-tunnel?color=a1b858&label=)](https://npm.im/unplugin-cloudflare-tunnel)
+[![Open on npmx.dev](https://npmx.dev/api/registry/badge/version/unplugin-cloudflare-tunnel)](https://npmx.dev/package/unplugin-cloudflare-tunnel)
 [![pkg.pr.new](https://pkg.pr.new/badge/o-az/unplugin-cloudflare-tunnel)](https://pkg.pr.new/~/o-az/unplugin-cloudflare-tunnel)
 
 A plugin that automatically creates and manages Cloudflare tunnels for local development.
