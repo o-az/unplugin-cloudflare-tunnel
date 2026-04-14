@@ -1,5 +1,11 @@
 # unplugin-cloudflare-tunnel
 
+## 0.1.0
+
+### Minor Changes
+
+- [#12](https://github.com/o-az/unplugin-cloudflare-tunnel/pull/12) [`477a85d`](https://github.com/o-az/unplugin-cloudflare-tunnel/commit/477a85df813074d381ea43c1e072c3bf282c1713) Thanks [@o-az](https://github.com/o-az)! - Default to `http2` for faster resolve. Added optional `protocol?: 'http2' | 'quic'` field, default `http2`
+
 ## 0.0.5
 
 ### Patch Changes
