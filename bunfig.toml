@@ -1,7 +1,4 @@
 telemetry = false
 
-[console]
-debug = 5
-
 [run]
 bun = true

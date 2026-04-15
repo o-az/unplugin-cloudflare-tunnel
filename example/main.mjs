@@ -14,8 +14,7 @@ function updateStatus() {
 
     // Check if we can detect we're running through Cloudflare
     const isCloudflare =
-      document.location.hostname !== 'localhost' &&
-      document.location.hostname !== '127.0.0.1'
+      document.location.hostname !== 'localhost' && document.location.hostname !== '127.0.0.1'
 
     if (isCloudflare) {
       statusElement.textContent = '🟢 Connected via Cloudflare Tunnel'
@@ -27,14 +26,13 @@ function updateStatus() {
       const copyButton = app?.querySelector('button#copy-url')
       if (copyButton) {
         copyButton.style.display = 'inline-block'
-        copyButton.onclick = () => {
-          navigator.clipboard.writeText(tunnelUrl)
+        copyButton.onclick = async () => {
+          await navigator.clipboard.writeText(tunnelUrl)
           alert('Tunnel URL copied to clipboard!')
         }
       }
     } else {
-      statusElement.textContent =
-        '🟡 Running locally (tunnel may be starting...)'
+      statusElement.textContent = '🟡 Running locally (tunnel may be starting...)'
       statusElement.style.color = 'orange'
       tunnelUrlElement.textContent = tunnelUrl || 'Tunnel starting...'
     }

@@ -11,6 +11,6 @@ describe('rollup', async () => {
       const { snapshot } = await rollupBuild(id, [Starter()])
       return snapshot
     },
-    { cwd: path.resolve(dirname, 'fixtures'), promise: true },
+    { cwd: path.resolve(dirname, 'fixtures'), promise: true }
   )
 })

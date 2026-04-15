@@ -21,11 +21,11 @@ export default defineConfig(config => {
         tunnelName: 'dev-tunnel',
         ssl: `*.${tunnelDnsName}`,
         hostname: `dev.${tunnelDnsName}`,
-        logFile: './logs/cloudflare-tunnel_vite.log',
-      }),
+        logFile: './logs/cloudflare-tunnel_vite.log'
+      })
     ],
     server: {
-      port: 420_69,
-    },
+      port: 420_69
+    }
   }
 })

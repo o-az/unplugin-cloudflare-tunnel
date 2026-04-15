@@ -14,13 +14,13 @@ if (!tunnelDnsName) throw new Error('CLOUDFLARE_TUNNEL_DNS_NAME is not set')
 export default {
   name: 'unplugin-cloudflare-tunnel Webpack example',
   devServer: {
-    port: 88_11,
+    port: 88_11
   },
   dotenv: true,
   entry: './main.mjs',
   mode: 'development',
   resolve: {
-    extensions: ['.ts', '.js', '.mjs'],
+    extensions: ['.ts', '.js', '.mjs']
   },
   module: {
     rules: [
@@ -29,16 +29,16 @@ export default {
         use: {
           loader: 'ts-loader',
           options: {
-            onlyCompileBundledFiles: true,
-          },
+            onlyCompileBundledFiles: true
+          }
         },
-        exclude: /node_modules/,
-      },
-    ],
+        exclude: /node_modules/
+      }
+    ]
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: './index.html',
+      template: './index.html'
     }),
     CloudflareTunnel({
       apiToken,
@@ -46,7 +46,7 @@ export default {
       tunnelName: 'dev-tunnel',
       ssl: `*.${tunnelDnsName}`,
       hostname: `dev.${tunnelDnsName}`,
-      logFile: './logs/cloudflare-tunnel_webpack.log',
-    }) as unknown as webpack.WebpackPluginInstance,
-  ],
+      logFile: './logs/cloudflare-tunnel_webpack.log'
+    }) as unknown as webpack.WebpackPluginInstance
+  ]
 } satisfies webpack.Configuration

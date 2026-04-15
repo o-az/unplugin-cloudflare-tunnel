@@ -1,10 +1,8 @@
 # unplugin-cloudflare-tunnel
 
-[![Open on npmx.dev](https://npmx.dev/api/registry/badge/version/unplugin-cloudflare-tunnel)](https://npmx.dev/package/unplugin-cloudflare-tunnel)
-[![pkg.pr.new](https://pkg.pr.new/badge/o-az/unplugin-cloudflare-tunnel)](https://pkg.pr.new/~/o-az/unplugin-cloudflare-tunnel)
+[![Open on npmx.dev](https://npmx.dev/api/registry/badge/version/unplugin-cloudflare-tunnel)](https://npmx.dev/package/unplugin-cloudflare-tunnel) [![pkg.pr.new](https://pkg.pr.new/badge/o-az/unplugin-cloudflare-tunnel)](https://pkg.pr.new/~/o-az/unplugin-cloudflare-tunnel)
 
-A plugin that automatically creates and manages Cloudflare tunnels for local development.
-Available for:
+A plugin that automatically creates and manages Cloudflare tunnels for local development. Available for:
 
 - [Vite](https://vite.dev),
 - [Rspack](https://rspack.rs)
@@ -15,9 +13,7 @@ Available for:
 - [Rollup](https://rollupjs.org) <sup>soon</sup>
 - [Rolldown](https://rolldown.rs) <sup>soon</sup>
 
-> [!NOTE]
-> This is under active development.
-> If you have any suggestions, I'm all ears, please open an issue.
+> [!NOTE] This is under active development. If you have any suggestions, I'm all ears, please open an issue.
 
 ## Install
 
@@ -65,9 +61,9 @@ export default defineConfig({
   plugins: [
     CloudflareTunnel({
       mode: 'quick',
-      protocol: 'http2',
-    }),
-  ],
+      protocol: 'http2'
+    })
+  ]
 })
 ```
 
@@ -84,9 +80,9 @@ export default defineConfig({
       mode: 'named',
       hostname: 'dev.example.com',
       apiToken: process.env.CLOUDFLARE_API_TOKEN,
-      protocol: 'http2',
-    }),
-  ],
+      protocol: 'http2'
+    })
+  ]
 })
 ```
 
@@ -101,9 +97,9 @@ import CloudflareTunnel from 'unplugin-cloudflare-tunnel/vite'
 export default defineConfig({
   plugins: [
     CloudflareTunnel({
-      mode: 'quick',
-    }),
-  ],
+      mode: 'quick'
+    })
+  ]
 })
 ```
 
@@ -120,9 +116,7 @@ import CloudflareTunnel from 'unplugin-cloudflare-tunnel/rspack'
 
 export default {
   /* ... */
-  plugins: [
-    CloudflareTunnel(),
-  ]
+  plugins: [CloudflareTunnel()]
 }
 ```
 
@@ -150,8 +144,7 @@ Example in [./example/webpack.config.ts](../example/webpack.config.ts): `bun --f
 
 ## Virtual Module: Access Tunnel URL
 
-> [!NOTE]
-> This feature is only available in Vite and Vite-based frameworks (i.e., Astro)
+> [!NOTE] This feature is only available in Vite and Vite-based frameworks (i.e., Astro)
 
 The plugin provides a virtual module that allows you to access the tunnel URL in your application code during development. This is useful for:
 

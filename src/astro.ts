@@ -7,6 +7,6 @@ export default (options: CloudflareTunnelOptions): any => ({
       astro.config.vite ||= {}
       astro.config.vite.plugins ||= []
       astro.config.vite.plugins.push(unplugin.vite(options))
-    },
-  },
+    }
+  }
 })

@@ -4,19 +4,19 @@ import { install } from 'cloudflared'
 
 export const CloudflareErrorSchema = z.object({
   code: z.number(),
-  message: z.string(),
+  message: z.string()
 })
 
 export const CloudflareApiResponseSchema = z.object({
   success: z.boolean(),
   errors: z.optional(z.array(CloudflareErrorSchema)),
   messages: z.optional(z.array(z.string())),
-  result: z.unknown(),
+  result: z.unknown()
 })
 
 export const AccountSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  name: z.string()
 })
 
 export const ZoneSchema = z.object({
@@ -24,9 +24,9 @@ export const ZoneSchema = z.object({
   name: z.string(),
   account: z.optional(
     z.object({
-      id: z.string(),
-    }),
-  ),
+      id: z.string()
+    })
+  )
 })
 
 export const TunnelSchema = z.object({
@@ -34,7 +34,7 @@ export const TunnelSchema = z.object({
   name: z.string(),
   account_tag: z.string(),
   created_at: z.string(),
-  connections: z.optional(z.array(z.unknown())),
+  connections: z.optional(z.array(z.unknown()))
 })
 
 export const DNSRecordSchema = z.object({
@@ -43,7 +43,7 @@ export const DNSRecordSchema = z.object({
   name: z.string(),
   content: z.string(),
   proxied: z.boolean(),
-  comment: z.nullish(z.string()),
+  comment: z.nullish(z.string())
 })
 
 /* -------------------------------------------------------------------------- */
@@ -58,19 +58,17 @@ function normalizeHost(host: string | undefined): string {
 }
 
 export function normalizeAddress(
-  address: string | { address?: string; port?: number } | null | undefined,
+  address: string | { address?: string; port?: number } | null | undefined
 ): { host: string; port?: number } {
   if (address && typeof address === 'object') {
     return {
       host: normalizeHost(
-        'address' in address && address.address
-          ? (address as any).address
-          : undefined,
+        'address' in address && address.address ? (address as any).address : undefined
       ),
       port:
         'port' in address && typeof (address as any).port === 'number'
           ? (address as any).port
-          : undefined,
+          : undefined
     }
   }
   return { host: 'localhost' }
