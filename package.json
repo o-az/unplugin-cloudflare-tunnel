@@ -24,6 +24,7 @@
     "./rolldown": "./dist/rolldown.mjs",
     "./rollup": "./dist/rollup.mjs",
     "./rspack": "./dist/rspack.mjs",
+    "./src-y0QezOnN": "./dist/src-y0QezOnN.mjs",
     "./vite": "./dist/vite.mjs",
     "./webpack": "./dist/webpack.mjs",
     "./*": "./*"
@@ -42,7 +43,7 @@
     "lint": "oxlint --config='oxlint.config.ts' --type-aware --type-check --fix-dangerously",
     "check": "bun format && bun lint",
     "check:types": "bun tsgo --project tsconfig.json --noEmit",
-    "test": "vitest --run",
+    "test": "NODE_NO_WARNINGS=1 vitest --run",
     "changeset:version": "changeset version && bun format",
     "changeset:publish": "changeset publish",
     "publish:manual": "bun ./scripts/publish.ts --registry='https://registry.npmjs.org'",

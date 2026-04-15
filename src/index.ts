@@ -10,42 +10,45 @@
  * @license MIT
  */
 
-import { createUnplugin, type UnpluginFactory, type UnpluginInstance } from 'unplugin'
 import * as z from 'zod/mini'
+import { bin } from 'cloudflared'
 import * as NodeUtil from 'node:util'
 import * as NodeModule from 'node:module'
-import { bin } from 'cloudflared'
 import type * as NodeHTTP from 'node:http'
 import type * as NodeHTTPS from 'node:https'
 import type * as NodeHTTP2 from 'node:http2'
 import * as NodeChildProcess from 'node:child_process'
 import type { Compiler as WebpackCompiler } from 'webpack'
 import type { Compiler as RspackCompiler } from '@rspack/core'
+import { createUnplugin, type UnpluginFactory, type UnpluginInstance } from 'unplugin'
+
 import {
-  AccountSchema,
-  CloudflareApiResponseSchema,
-  DNSRecordSchema,
-  TunnelSchema,
+  type Zone,
   ZoneSchema,
-  ensureCloudflaredBinary,
+  TunnelSchema,
+  AccountSchema,
   getLocalTarget,
-  normalizeAddress,
   type DNSRecord,
-  type Zone
+  DNSRecordSchema,
+  normalizeAddress,
+  ensureCloudflaredBinary,
+  CloudflareApiResponseSchema
 } from '#api.ts'
 import {
-  type CloudflareTunnelOptions,
   type LogLevel,
-  type NamedTunnelOptions
+  type NamedTunnelOptions,
+  type CloudflareTunnelOptions
 } from '#core/options.ts'
+import { createKillCloudflared } from '#core/process.ts'
 
-export type { Account, CloudflareApiResponse, DNSRecord, Tunnel, Zone } from '#api.ts'
 export type {
   BaseTunnelOptions,
-  CloudflareTunnelOptions,
+  QuickTunnelOptions,
   NamedTunnelOptions,
-  QuickTunnelOptions
+  CloudflareTunnelOptions
 } from '#core/options.ts'
+export { createKillCloudflared } from '#core/process.ts'
+export type { Account, CloudflareApiResponse, DNSRecord, Tunnel, Zone } from '#api.ts'
 
 const PLUGIN_NAME = 'unplugin-cloudflare-tunnel'
 
@@ -715,70 +718,16 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
     })
   }
 
-  const killCloudflared = (signal: NodeJS.Signals = 'SIGTERM') => {
-    if (!child || child.killed) return Promise.resolve()
-
-    globalState.shuttingDown = true
-    globalState.tunnelUrl = undefined
-
-    const activeChild = child
-
-    return new Promise<void>(resolve => {
-      let settled = false
-      let forceKillTimer: ReturnType<typeof setTimeout> | undefined
-
-      const settle = () => {
-        if (settled) return
-        settled = true
-        if (forceKillTimer) clearTimeout(forceKillTimer)
-
-        resolve()
-      }
-
-      activeChild.once('exit', () => {
-        settle()
-      })
-
-      try {
-        debugLog(
-          `[unplugin-cloudflare-tunnel] Terminating cloudflared process (PID: ${activeChild.pid}) with ${signal}...`
-        )
-        const killed = activeChild.kill(signal)
-
-        if (!killed) {
-          if (process.platform === 'win32') {
-            NodeChildProcess.exec(`taskkill /pid ${activeChild.pid} /T /F`, () => settle())
-          } else {
-            settle()
-          }
-          return
-        }
-
-        if (signal === 'SIGTERM') {
-          forceKillTimer = setTimeout(() => {
-            if (settled) return
-
-            debugLog('[unplugin-cloudflare-tunnel] Force killing cloudflared process...')
-            if (process.platform === 'win32') {
-              NodeChildProcess.exec(`taskkill /pid ${activeChild.pid} /T /F`, () => settle())
-            } else {
-              try {
-                const forceKilled = activeChild.kill('SIGKILL')
-                if (!forceKilled) settle()
-              } catch {
-                settle()
-              }
-            }
-          }, 2000)
-        }
-      } catch (error) {
-        debugLog(
-          `[unplugin-cloudflare-tunnel] Note: Error killing cloudflared: ${error instanceof Error ? error.message : String(error)}`
-        )
-        settle()
-      }
-    })
-  }
+  const killCloudflared = createKillCloudflared({
+    getChild: () => child,
+    clearTunnelUrl: () => {
+      globalState.tunnelUrl = undefined
+    },
+    markShuttingDown: () => {
+      globalState.shuttingDown = true
+    },
+    debugLog
+  })
 
   let exitHandlersRegistered = globalState.exitHandlersRegistered ?? false
 
