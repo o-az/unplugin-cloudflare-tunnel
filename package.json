@@ -17,13 +17,13 @@
   "exports": {
     ".": "./dist/index.mjs",
     "./api": "./dist/api.mjs",
+    "./api-2NRlQjsN": "./dist/api-2NRlQjsN.mjs",
     "./astro": "./dist/astro.mjs",
     "./esbuild": "./dist/esbuild.mjs",
     "./farm": "./dist/farm.mjs",
     "./rolldown": "./dist/rolldown.mjs",
     "./rollup": "./dist/rollup.mjs",
     "./rspack": "./dist/rspack.mjs",
-    "./schemas-Cpk3vGGi": "./dist/schemas-Cpk3vGGi.mjs",
     "./vite": "./dist/vite.mjs",
     "./webpack": "./dist/webpack.mjs",
     "./*": "./*"

@@ -12,22 +12,44 @@
 
 import { createUnplugin, type UnpluginFactory, type UnpluginInstance } from 'unplugin'
 import * as z from 'zod/mini'
-import NodeFS from 'node:fs/promises'
 import * as NodeUtil from 'node:util'
 import * as NodeModule from 'node:module'
-import { bin, install } from 'cloudflared'
+import { bin } from 'cloudflared'
 import type * as NodeHTTP from 'node:http'
 import type * as NodeHTTPS from 'node:https'
 import type * as NodeHTTP2 from 'node:http2'
 import * as NodeChildProcess from 'node:child_process'
 import type { Compiler as WebpackCompiler } from 'webpack'
 import type { Compiler as RspackCompiler } from '@rspack/core'
+import {
+  AccountSchema,
+  CloudflareApiResponseSchema,
+  DNSRecordSchema,
+  TunnelSchema,
+  ZoneSchema,
+  ensureCloudflaredBinary,
+  getLocalTarget,
+  normalizeAddress,
+  type DNSRecord,
+  type Zone
+} from '#api.ts'
+import {
+  type CloudflareTunnelOptions,
+  type LogLevel,
+  type NamedTunnelOptions
+} from '#core/options.ts'
+
+export type { Account, CloudflareApiResponse, DNSRecord, Tunnel, Zone } from '#api.ts'
+export type {
+  BaseTunnelOptions,
+  CloudflareTunnelOptions,
+  NamedTunnelOptions,
+  QuickTunnelOptions
+} from '#core/options.ts'
 
 const PLUGIN_NAME = 'unplugin-cloudflare-tunnel'
 
 const INFO_LOG_REGEX = /^.*Z INF .*/
-
-type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal'
 
 const LOG_LEVEL_RANK: Record<LogLevel, number> = {
   debug: 10,
@@ -68,208 +90,6 @@ function colorize(text: string, ansi: string) {
   if (!supportsColor()) return text
   return `${ansi}${text}${ANSI.reset}`
 }
-
-// Zod schemas for Cloudflare API responses
-const CloudflareErrorSchema = z.object({
-  code: z.number(),
-  message: z.string()
-})
-
-const CloudflareApiResponseSchema = z.object({
-  success: z.boolean(),
-  errors: z.optional(z.array(CloudflareErrorSchema)),
-  messages: z.optional(z.array(z.string())),
-  result: z.unknown()
-})
-
-const AccountSchema = z.object({
-  id: z.string(),
-  name: z.string()
-})
-
-const ZoneSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  account: z.optional(
-    z.object({
-      id: z.string()
-    })
-  )
-})
-
-const TunnelSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  account_tag: z.string(),
-  created_at: z.string(),
-  connections: z.optional(z.array(z.unknown()))
-})
-
-const DNSRecordSchema = z.object({
-  id: z.string(),
-  type: z.string(),
-  name: z.string(),
-  content: z.string(),
-  proxied: z.boolean(),
-  comment: z.nullish(z.string())
-})
-
-// Type definitions (exported for potential external use)
-export type CloudflareApiResponse<T = unknown> = z.infer<typeof CloudflareApiResponseSchema> & {
-  result: T
-}
-export type Account = z.infer<typeof AccountSchema>
-export type Zone = z.infer<typeof ZoneSchema>
-export type Tunnel = z.infer<typeof TunnelSchema>
-export type DNSRecord = z.infer<typeof DNSRecordSchema>
-
-/**
- * Base configuration options shared between named and quick tunnel modes
- */
-interface BaseTunnelOptions {
-  /**
-   * Tunnel mode.
-   * - `quick`: temporary `trycloudflare.com` URL, no hostname required
-   * - `named`: persistent tunnel using your configured hostname
-   *
-   * When omitted, the plugin uses named mode if `hostname` is provided,
-   * otherwise it uses quick mode.
-   */
-  mode?: 'quick' | 'named'
-
-  /**
-   * Local port your dev server listens on
-   * If not specified, will automatically use the bundler's configured port
-   * @default undefined (auto-detect from bundler config)
-   */
-  port?: number
-
-  /**
-   * Path to write cloudflared logs to a file
-   * Useful for debugging tunnel issues
-   */
-  logFile?: string
-
-  /**
-   * Log level for cloudflared output shown by the plugin.
-   * The plugin still runs cloudflared with at least `info` internally so it can
-   * detect tunnel readiness and print the tunnel URL.
-   * @default undefined
-   */
-  logLevel?: 'debug' | 'info' | 'warn' | 'error' | 'fatal'
-
-  /**
-   * Transport protocol used by cloudflared.
-   * `http2` is the default because it is more reliable for local development
-   * networks than QUIC.
-   * @default 'http2'
-   */
-  protocol?: 'http2' | 'quic'
-
-  /**
-   * Enable additional verbose logging for easier debugging.
-   * When true, the plugin will output extra information prefixed with
-   * `[cloudflare-tunnel:debug]`.
-   * @default false
-   */
-  debug?: boolean
-
-  /**
-   * Enable or disable the tunnel plugin. When set to `false` the plugin is
-   * completely disabled — cloudflared will NOT be downloaded or started.
-   * @default true
-   */
-  enabled?: boolean
-}
-
-/**
- * Configuration options for named tunnel mode (requires hostname and API token)
- */
-interface NamedTunnelOptions extends BaseTunnelOptions {
-  /**
-   * Public hostname for the tunnel (e.g., "dev.example.com")
-   * Must be a domain in your Cloudflare account
-   */
-  hostname: string
-
-  /**
-   * Cloudflare API token with required permissions:
-   * - Zone:Zone:Read
-   * - Zone:DNS:Edit
-   * - Account:Cloudflare Tunnel:Edit
-   *
-   * Fallback priority:
-   * 1. Provided apiToken option
-   * 2. CLOUDFLARE_API_TOKEN environment variable
-   */
-  apiToken?: string
-
-  /**
-   * Cloudflare account ID
-   * If omitted, uses the first account associated with the API token
-   */
-  accountId?: string
-
-  /**
-   * Cloudflare zone ID
-   * If omitted, automatically resolved from the hostname
-   */
-  zoneId?: string
-
-  /**
-   * Name for the tunnel in your Cloudflare dashboard
-   * Must contain only letters, numbers, and hyphens. Cannot start or end with a hyphen.
-   * @default "dev-tunnel"
-   */
-  tunnelName?: string
-
-  /**
-   * Wildcard DNS domain to ensure exists (e.g., "*.example.com").
-   * When provided the plugin will ensure both A and AAAA records exist.
-   */
-  dns?: string
-
-  /**
-   * Wildcard SSL domain to ensure exists (e.g., "*.example.com").
-   * When provided the plugin will request/ensure a wildcard edge certificate.
-   * If omitted the plugin will attempt to detect an existing wildcard certificate
-   * or Total TLS; otherwise it will request a regular certificate for the provided hostname.
-   */
-  ssl?: string
-
-  /**
-   * Cleanup configuration for managing orphaned resources
-   */
-  cleanup?: {
-    /**
-     * Whether to automatically clean up orphaned DNS records on startup
-     * @default true
-     */
-    autoCleanup?: boolean
-
-    /**
-     * Array of tunnel names to preserve during cleanup (in addition to current tunnel)
-     * @default []
-     */
-    preserveTunnels?: Array<string>
-  }
-}
-
-/**
- * Configuration options for quick tunnel mode (no hostname required, generates random URL)
- */
-interface QuickTunnelOptions extends BaseTunnelOptions {
-  // No additional options beyond base options
-}
-
-/**
- * Configuration options for the Cloudflare Tunnel plugin
- *
- * Two modes are supported:
- * - Named tunnel mode: set `mode: 'named'` or provide `hostname`
- * - Quick tunnel mode: set `mode: 'quick'` or omit `hostname`
- */
-export type CloudflareTunnelOptions = NamedTunnelOptions | QuickTunnelOptions
 
 const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
   options: CloudflareTunnelOptions = {}
@@ -624,63 +444,6 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
     debugLog(`Tracking SSL certificate: ${certificateId} for hosts: ${hosts.join(', ')}`)
   }
 
-  const findMismatchedSslCertificates = async (
-    apiToken: string,
-    zoneId: string,
-    currentTunnelName: string,
-    currentHostname: string
-  ): Promise<Array<any>> => {
-    try {
-      const certPacks: any = await cf(
-        apiToken,
-        'GET',
-        `/zones/${zoneId}/ssl/certificate_packs?status=all`,
-        undefined,
-        z.any()
-      )
-      const allCerts: Array<any> = Array.isArray(certPacks) ? certPacks : certPacks.result || []
-
-      const currentTunnelCerts = allCerts.filter(cert => {
-        const certHosts = cert.hostnames || cert.hosts || []
-        return certHosts.some((host: string) =>
-          host.startsWith(`cf-tunnel-plugin-${currentTunnelName}--`)
-        )
-      })
-
-      debugLog(
-        `Found ${currentTunnelCerts.length} SSL certificates for current tunnel: ${currentTunnelName}`
-      )
-
-      const mismatchedCerts = currentTunnelCerts.filter(cert => {
-        const certHosts = cert.hostnames || cert.hosts || []
-        const coversCurrentHostname = certHosts.some((host: string) => {
-          if (host.startsWith('cf-tunnel-plugin-')) return false
-          return (
-            host === currentHostname ||
-            (host.startsWith('*.') && currentHostname.endsWith(host.slice(1)))
-          )
-        })
-        return !coversCurrentHostname
-      })
-
-      debugLog(
-        `Found ${mismatchedCerts.length} mismatched SSL certificates`,
-        mismatchedCerts.map(c => ({
-          id: c.id,
-          hosts: c.hostnames || c.hosts,
-          currentHostname
-        }))
-      )
-
-      return mismatchedCerts
-    } catch (error) {
-      console.error(
-        `[unplugin-cloudflare-tunnel] ❌ SSL certificate listing failed: ${(error as Error).message}`
-      )
-      return []
-    }
-  }
-
   const cleanupMismatchedDnsRecords = async (
     apiToken: string,
     zoneId: string,
@@ -1019,13 +782,6 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
   let exitHandlersRegistered = globalState.exitHandlersRegistered ?? false
 
-  const scheduleFatalExit = (code = 1) => {
-    process.exitCode = code
-    setImmediate(() => {
-      process.exit(code)
-    })
-  }
-
   const registerExitHandler = () => {
     if (exitHandlersRegistered) return
     exitHandlersRegistered = true
@@ -1053,16 +809,6 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
         error
       )
       void killCloudflared('SIGTERM')
-    })
-
-    process.once('unhandledRejection', reason => {
-      console.error(
-        '[unplugin-cloudflare-tunnel] Unhandled rejection, cleaning up cloudflared...',
-        reason
-      )
-      void killCloudflared('SIGTERM').finally(() => {
-        scheduleFatalExit(1)
-      })
     })
   }
 
@@ -1352,40 +1098,6 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
       }
       const tunnelId = tunnel.id as string
 
-      if (autoCleanup) {
-        debugLog(
-          `[unplugin-cloudflare-tunnel] Running resource cleanup for tunnel '${tunnelName}'...`
-        )
-
-        const dnsCleanup = await cleanupMismatchedDnsRecords(
-          apiToken,
-          zoneId,
-          generateDnsComment(),
-          hostname!,
-          tunnelId
-        )
-        if (dnsCleanup.found.length > 0) {
-          pluginLog.warn(
-            `DNS cleanup: ${dnsCleanup.found.length} mismatched, ${dnsCleanup.deleted.length} deleted`
-          )
-        }
-
-        const mismatchedSslCerts = await findMismatchedSslCertificates(
-          apiToken,
-          zoneId,
-          tunnelName,
-          hostname!
-        )
-        if (mismatchedSslCerts.length > 0) {
-          for (const cert of mismatchedSslCerts)
-            await cf(apiToken, 'DELETE', `/zones/${zoneId}/ssl/certificate_packs/${cert.id}`)
-
-          pluginLog.warn(`SSL cleanup: ${mismatchedSslCerts.length} deleted`)
-        }
-      } else {
-        debugLog('← Cleanup skipped', cleanupConfig)
-      }
-
       const localTarget = getLocalTarget(serverHost, port)
       debugLog('← Connecting to local target', localTarget)
 
@@ -1402,95 +1114,6 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
         }
       })
 
-      const generateSslTagHostname = () => {
-        return `cf-tunnel-plugin-${tunnelName}--${parentDomain}`
-      }
-
-      if (dnsOption) {
-        const ensureDnsRecord = async (type: 'CNAME', content: string) => {
-          const existingWildcard = await cf(
-            apiToken,
-            'GET',
-            `/zones/${zoneId}/dns_records?type=${type}&name=${encodeURIComponent(dnsOption)}`,
-            undefined,
-            z.array(DNSRecordSchema)
-          )
-          if (existingWildcard.length === 0) {
-            console.log(`[unplugin-cloudflare-tunnel] Creating ${type} record for ${dnsOption}...`)
-            await cf(
-              apiToken,
-              'POST',
-              `/zones/${zoneId}/dns_records`,
-              {
-                type,
-                name: dnsOption,
-                content,
-                proxied: true,
-                comment: generateDnsComment()
-              },
-              DNSRecordSchema
-            )
-          }
-        }
-
-        await ensureDnsRecord('CNAME', `${tunnelId}.cfargotunnel.com`)
-      } else {
-        const wildcardDns = `*.${parentDomain}`
-        const existingWildcard = await cf(
-          apiToken,
-          'GET',
-          `/zones/${zoneId}/dns_records?type=CNAME&name=${wildcardDns}`,
-          undefined,
-          z.array(DNSRecordSchema)
-        )
-        if (existingWildcard.length === 0) {
-          const existingDnsRecords = await cf(
-            apiToken,
-            'GET',
-            `/zones/${zoneId}/dns_records?type=CNAME&name=${hostname!}`,
-            undefined,
-            z.array(DNSRecordSchema)
-          )
-          const existingRecord = existingDnsRecords[0]
-          const expectedContent = `${tunnelId}.cfargotunnel.com`
-
-          if (!existingRecord) {
-            console.log(`[unplugin-cloudflare-tunnel] Creating DNS record for ${hostname}...`)
-            await cf(
-              apiToken,
-              'POST',
-              `/zones/${zoneId}/dns_records`,
-              {
-                type: 'CNAME',
-                name: hostname!,
-                content: expectedContent,
-                proxied: true,
-                comment: generateDnsComment()
-              },
-              DNSRecordSchema
-            )
-          } else if (existingRecord.content !== expectedContent) {
-            debugLog(`← DNS record for ${hostname} points to different tunnel, updating...`)
-            pluginLog.info(
-              `Updating DNS record for ${hostname} to point to tunnel '${tunnelName}'...`
-            )
-            await cf(
-              apiToken,
-              'PUT',
-              `/zones/${zoneId}/dns_records/${existingRecord.id}`,
-              {
-                type: 'CNAME',
-                name: hostname!,
-                content: expectedContent,
-                proxied: true,
-                comment: generateDnsComment()
-              },
-              DNSRecordSchema
-            )
-          }
-        }
-      }
-
       const token = await cf(
         apiToken,
         'GET',
@@ -1499,7 +1122,119 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
         z.string()
       )
 
-      try {
+      const generateSslTagHostname = () => {
+        return `cf-tunnel-plugin-${tunnelName}--${parentDomain}`
+      }
+
+      const finalizeNamedTunnelSetup = async () => {
+        if (autoCleanup) {
+          debugLog(
+            `[unplugin-cloudflare-tunnel] Running resource cleanup for tunnel '${tunnelName}'...`
+          )
+
+          const dnsCleanup = await cleanupMismatchedDnsRecords(
+            apiToken,
+            zoneId,
+            generateDnsComment(),
+            hostname!,
+            tunnelId
+          )
+          if (dnsCleanup.found.length > 0) {
+            pluginLog.warn(
+              `DNS cleanup: ${dnsCleanup.found.length} mismatched, ${dnsCleanup.deleted.length} deleted`
+            )
+          }
+        } else {
+          debugLog('← Cleanup skipped', cleanupConfig)
+        }
+
+        if (dnsOption) {
+          const ensureDnsRecord = async (type: 'CNAME', content: string) => {
+            const existingWildcard = await cf(
+              apiToken,
+              'GET',
+              `/zones/${zoneId}/dns_records?type=${type}&name=${encodeURIComponent(dnsOption)}`,
+              undefined,
+              z.array(DNSRecordSchema)
+            )
+            if (existingWildcard.length === 0) {
+              console.log(
+                `[unplugin-cloudflare-tunnel] Creating ${type} record for ${dnsOption}...`
+              )
+              await cf(
+                apiToken,
+                'POST',
+                `/zones/${zoneId}/dns_records`,
+                {
+                  type,
+                  name: dnsOption,
+                  content,
+                  proxied: true,
+                  comment: generateDnsComment()
+                },
+                DNSRecordSchema
+              )
+            }
+          }
+
+          await ensureDnsRecord('CNAME', `${tunnelId}.cfargotunnel.com`)
+        } else {
+          const wildcardDns = `*.${parentDomain}`
+          const existingWildcard = await cf(
+            apiToken,
+            'GET',
+            `/zones/${zoneId}/dns_records?type=CNAME&name=${wildcardDns}`,
+            undefined,
+            z.array(DNSRecordSchema)
+          )
+          if (existingWildcard.length === 0) {
+            const existingDnsRecords = await cf(
+              apiToken,
+              'GET',
+              `/zones/${zoneId}/dns_records?type=CNAME&name=${hostname!}`,
+              undefined,
+              z.array(DNSRecordSchema)
+            )
+            const existingRecord = existingDnsRecords[0]
+            const expectedContent = `${tunnelId}.cfargotunnel.com`
+
+            if (!existingRecord) {
+              console.log(`[unplugin-cloudflare-tunnel] Creating DNS record for ${hostname}...`)
+              await cf(
+                apiToken,
+                'POST',
+                `/zones/${zoneId}/dns_records`,
+                {
+                  type: 'CNAME',
+                  name: hostname!,
+                  content: expectedContent,
+                  proxied: true,
+                  comment: generateDnsComment()
+                },
+                DNSRecordSchema
+              )
+            } else if (existingRecord.content !== expectedContent) {
+              debugLog(`← DNS record for ${hostname} points to different tunnel, updating...`)
+              pluginLog.info(
+                `Updating DNS record for ${hostname} to point to tunnel '${tunnelName}'...`
+              )
+              await cf(
+                apiToken,
+                'PUT',
+                `/zones/${zoneId}/dns_records/${existingRecord.id}`,
+                {
+                  type: 'CNAME',
+                  name: hostname!,
+                  content: expectedContent,
+                  proxied: true,
+                  comment: generateDnsComment()
+                },
+                DNSRecordSchema
+              )
+            }
+          }
+        }
+
         const certListRaw = await cf(
           apiToken,
           'GET',
@@ -1511,12 +1246,38 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
           ? certListRaw
           : certListRaw.result || []
 
+        if (autoCleanup) {
+          const currentTunnelCerts = certPacks.filter(cert => {
+            const certHosts = cert.hostnames || cert.hosts || []
+            return certHosts.some((host: string) =>
+              host.startsWith(`cf-tunnel-plugin-${tunnelName}--`)
+            )
+          })
+          const mismatchedSslCerts = currentTunnelCerts.filter(cert => {
+            const certHosts = cert.hostnames || cert.hosts || []
+            const coversCurrentHostname = certHosts.some((host: string) => {
+              if (host.startsWith('cf-tunnel-plugin-')) return false
+              return (
+                host === hostname! || (host.startsWith('*.') && hostname!.endsWith(host.slice(1)))
+              )
+            })
+            return !coversCurrentHostname
+          })
+
+          if (mismatchedSslCerts.length > 0) {
+            for (const cert of mismatchedSslCerts)
+              await cf(apiToken, 'DELETE', `/zones/${zoneId}/ssl/certificate_packs/${cert.id}`)
+
+            pluginLog.warn(`SSL cleanup: ${mismatchedSslCerts.length} deleted`)
+          }
+        }
+
         const certContainingHost = (host: string) =>
           certPacks.filter(c => (c.hostnames || c.hosts || []).includes(host))?.[0]
+
         if (sslOption) {
           const isWildcard = sslOption.startsWith('*.')
           const certNeededHost = sslOption
-
           const matchingCert = certContainingHost(certNeededHost)
 
           if (!matchingCert) {
@@ -1582,11 +1343,6 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
             debugLog('← Edge certificate (wildcard) already exists', wildcardExists, wildcardDomain)
           }
         }
-      } catch (sslError) {
-        console.error(
-          `[unplugin-cloudflare-tunnel] ⚠️  SSL management error: ${(sslError as Error).message}`
-        )
-        throw sslError
       }
 
       let tunnelReady = false
@@ -1705,6 +1461,11 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
       spawnNamedTunnelProcess(protocol)
       registerExitHandler()
+      void finalizeNamedTunnelSetup().catch(error => {
+        console.error(
+          `[unplugin-cloudflare-tunnel] ❌ Post-start setup failed: ${(error as Error).message}`
+        )
+      })
 
       registerListeningHandler(() => {
         const { host: actualServerHost, port: actualPort } = normalizeAddress(
@@ -2136,45 +1897,6 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
       delete globalState.shuttingDown
     }
   }
-}
-
-/* -------------------------------------------------------------------------- */
-/* Utility functions                                                          */
-/* -------------------------------------------------------------------------- */
-
-function normalizeHost(host: string | undefined): string {
-  if (!host || host === '0.0.0.0' || host === '::' || host === '::0') {
-    return 'localhost'
-  }
-  return host
-}
-
-function normalizeAddress(
-  address: string | { address?: string; port?: number } | null | undefined
-): { host: string; port?: number } {
-  if (address && typeof address === 'object') {
-    return {
-      host: normalizeHost(
-        'address' in address && address.address ? (address as any).address : undefined
-      ),
-      port: 'port' in address && typeof address?.port === 'number' ? address?.port : undefined
-    }
-  }
-  return { host: 'localhost' }
-}
-
-async function ensureCloudflaredBinary(binPath: string) {
-  try {
-    await NodeFS.access(binPath)
-  } catch {
-    console.log('[unplugin-cloudflare-tunnel] Installing cloudflared binary...')
-    await install(binPath)
-  }
-}
-
-function getLocalTarget(host: string, port: number): string {
-  const isIpv6 = host.includes(':')
-  return `http://${isIpv6 ? `[${host}]` : host}:${port}`
 }
 
 export const CloudflareTunnel: UnpluginInstance<CloudflareTunnelOptions | undefined, false> =

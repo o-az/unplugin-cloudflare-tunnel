@@ -46,6 +46,14 @@ export const DNSRecordSchema = z.object({
   comment: z.nullish(z.string())
 })
 
+export type CloudflareApiResponse<T = unknown> = z.infer<typeof CloudflareApiResponseSchema> & {
+  result: T
+}
+export type Account = z.infer<typeof AccountSchema>
+export type Zone = z.infer<typeof ZoneSchema>
+export type Tunnel = z.infer<typeof TunnelSchema>
+export type DNSRecord = z.infer<typeof DNSRecordSchema>
+
 /* -------------------------------------------------------------------------- */
 /* Utility functions                                                          */
 /* -------------------------------------------------------------------------- */
