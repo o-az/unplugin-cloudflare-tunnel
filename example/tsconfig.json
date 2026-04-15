@@ -47,11 +47,20 @@
     "env.d.ts",
     "vite.config.ts",
     "rspack.config.ts",
-    "webpack.config.ts"
+    "webpack.config.ts",
+    "esbuild.config.ts",
+    "rollup.config.ts",
+    "rolldown.config.ts"
   ],
   "include": [
     "**/*.ts",
     "**/*.js",
     "**/*.mjs"
+  ],
+  "exclude": [
+    "dist",
+    "dist-esbuild",
+    "dist-rollup",
+    "dist-rolldown"
   ]
 }

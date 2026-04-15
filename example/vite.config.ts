@@ -5,10 +5,6 @@ import CloudflareTunnel from '../src/vite.ts'
 export default defineConfig(config => {
   const env = loadEnv(config.mode, process.cwd(), '')
 
-  Object.assign(process.env, {
-    TOOL: 'vite'
-  })
-
   const apiToken = env.CLOUDFLARE_API_TOKEN
   if (!apiToken) throw new Error('CLOUDFLARE_API_TOKEN is not set')
 

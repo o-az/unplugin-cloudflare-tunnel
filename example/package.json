@@ -3,15 +3,21 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist dist-*",
     "dev:vite": "vite --config='vite.config.ts'",
     "dev:rspack": "rspack serve --config='rspack.config.ts'",
     "dev:webpack": "webpack serve --config='webpack.config.ts' --disable-interpret",
+    "dev:rollup": "bunx --bun rollup --config='rollup.config.ts' --watch",
+    "dev:rolldown": "bunx --bun rolldown --config='rolldown.config.ts' --watch",
     "check:types": "bun tsgo --project tsconfig.json --noEmit",
     "preview": "vite preview"
   },
   "dependencies": {
     "@rspack/core": "^1.7.11",
+    "esbuild": "^0.28.0",
+    "rolldown": "^1.0.0-rc.15",
+    "rollup": "^4.60.1",
+    "vite": "^8.0.8",
     "webpack": "^5.106.1"
   },
   "devDependencies": {

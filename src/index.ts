@@ -1091,7 +1091,6 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
     const registerListeningHandler = (handler: () => Promise<void> | void) => {
       const httpServer = server.httpServer
-      if (!httpServer) return
 
       const invokeHandler = () => {
         try {
@@ -1108,6 +1107,11 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
             `[unplugin-cloudflare-tunnel] ❌ Dev server listening hook failed: ${(error as Error).message}`
           )
         }
+      }
+
+      if (!httpServer) {
+        invokeHandler()
+        return
       }
 
       httpServer.on('listening', invokeHandler)
@@ -1129,13 +1133,19 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
           ? resolvedConfigPort
           : undefined) ||
         5173
+      const originRequest = server.httpServer
+        ? undefined
+        : {
+            httpHostHeader: `${serverHost}:${port}`
+          }
       const newConfigHash = JSON.stringify({
         isQuickMode,
         hostname,
         port,
         tunnelName,
         dnsOption,
-        sslOption
+        sslOption,
+        originRequest
       })
 
       if (
@@ -1200,7 +1210,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
                 server.httpServer?.address()
               )
 
-              if (actualPort !== port) {
+              if (server.httpServer && actualPort !== undefined && actualPort !== port) {
                 pluginLog.warn(
                   `Port conflict detected - server is using port ${actualPort} instead of ${port}`
                 )
@@ -1381,7 +1391,14 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
       await cf(apiToken, 'PUT', `/accounts/${accountId}/cfd_tunnel/${tunnelId}/configurations`, {
         config: {
-          ingress: [{ hostname: hostname!, service: localTarget }, { service: 'http_status:404' }]
+          ingress: [
+            {
+              hostname: hostname!,
+              service: localTarget,
+              ...(originRequest ? { originRequest } : {})
+            },
+            { service: 'http_status:404' }
+          ]
         }
       })
 
@@ -1707,7 +1724,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
             server.httpServer?.address()
           )
 
-          if (actualPort !== port) {
+          if (server.httpServer && actualPort !== undefined && actualPort !== port) {
             pluginLog.warn(
               `Port conflict detected - server is using port ${actualPort} instead of ${port}`
             )
@@ -1725,7 +1742,17 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
               {
                 config: {
                   ingress: [
-                    { hostname: hostname!, service: newLocalTarget },
+                    {
+                      hostname: hostname!,
+                      service: newLocalTarget,
+                      ...(originRequest
+                        ? {
+                            originRequest: {
+                              httpHostHeader: `${actualServerHost}:${actualPort ?? port}`
+                            }
+                          }
+                        : {})
+                    },
                     { service: 'http_status:404' }
                   ]
                 }
@@ -1739,7 +1766,12 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
               port: actualPort,
               tunnelName,
               dnsOption,
-              sslOption
+              sslOption,
+              originRequest: server.httpServer
+                ? undefined
+                : {
+                    httpHostHeader: `${actualServerHost}:${actualPort ?? port}`
+                  }
             })
             globalState.configHash = updatedConfigHash
             if (tunnelReady && activeTunnelProtocol) {
@@ -2045,6 +2077,31 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
         }
       }
     },
+    esbuild: {
+      config() {
+        announceConnecting()
+
+        if (typeof userProvidedPort === 'number' && !Number.isNaN(userProvidedPort)) {
+          const configuredPromise = configureServer({
+            config: {
+              server: {
+                port: userProvidedPort
+              }
+            }
+          })
+          globalState.tunnelUrl = configuredPromise.then(() => tunnelUrl).catch(() => '')
+        } else {
+          globalState.tunnelUrl = Promise.resolve('')
+          console.warn(
+            '[unplugin-cloudflare-tunnel] esbuild requires the plugin `port` option to enable tunnel startup'
+          )
+        }
+
+        if (!isQuickMode) {
+          debugLog(`[unplugin-cloudflare-tunnel] Configured esbuild tunnel target for ${hostname}`)
+        }
+      }
+    },
     rspack: compiler => {
       setupWebpackLikeDevServerIntegration(compiler, 'rspack')
     },
@@ -2054,7 +2111,25 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
       setupWebpackLikeDevServerIntegration(compiler, 'webpack')
     },
 
-    closeBundle() {
+    buildStart(this: any) {
+      if (!this?.meta?.watchMode) return
+      if (typeof userProvidedPort !== 'number' || Number.isNaN(userProvidedPort)) return
+      if (globalState.tunnelUrl) return
+
+      announceConnecting()
+
+      const configuredPromise = configureServer({
+        config: {
+          server: {
+            port: userProvidedPort
+          }
+        }
+      })
+      globalState.tunnelUrl = configuredPromise.then(() => tunnelUrl).catch(() => '')
+    },
+
+    closeBundle(this: any) {
+      if (this?.meta?.watchMode) return
       void killCloudflared('SIGTERM')
       delete globalState.child
       delete globalState.configHash
