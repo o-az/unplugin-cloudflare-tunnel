@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "clean": "rm -rf dist dist-*",
+    "dev:esbuild": "bun esbuild.config.ts",
     "dev:vite": "vite --config='vite.config.ts'",
     "dev:rspack": "rspack serve --config='rspack.config.ts'",
     "dev:webpack": "webpack serve --config='webpack.config.ts' --disable-interpret",
