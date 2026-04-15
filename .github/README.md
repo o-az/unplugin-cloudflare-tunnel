@@ -13,7 +13,9 @@ A plugin that automatically creates and manages Cloudflare tunnels for local dev
 - [Astro](https://astro.build) <sup>soon</sup>
 - [Farm](https://farmfe.org) <sup>soon</sup>
 
-> [!NOTE] This is under active development. If you have any suggestions, I'm all ears, please open an issue.
+> [!NOTE]
+>
+> This is under active development. If you have any suggestions, I'm all ears, please open an issue.
 
 ## Install
 
@@ -50,7 +52,9 @@ Mode selection rules:
 - `debug?: boolean`
 - `enabled?: boolean`
 
-> [!TIP] For esbuild, Rollup, and Rolldown dev usage, set `port` explicitly so the tunnel can target the local dev server.
+> [!TIP]
+>
+> For esbuild, Rollup, and Rolldown dev usage, set `port` explicitly so the tunnel can target the local dev server.
 
 ### Quick mode example
 
@@ -174,7 +178,9 @@ await ctx.serve({ port: 6420, servedir: './dist' })
 
 Example in [./example/esbuild.config.ts](../example/esbuild.config.ts): `cd example && bun run esbuild.config.ts`
 
-> [!NOTE] esbuild dev usage requires an explicit `port` option.
+> [!NOTE]
+>
+> esbuild dev usage requires an explicit `port` option.
 
 <br></details>
 
@@ -200,7 +206,9 @@ export default defineConfig({
 
 Example in [./example/rollup.config.ts](../example/rollup.config.ts): `cd example && bun run dev:rollup`
 
-> [!NOTE] Rollup dev usage requires an explicit `port` option.
+> [!NOTE]
+>
+> Rollup dev usage requires an explicit `port` option.
 
 <br></details>
 
@@ -226,13 +234,17 @@ export default defineConfig({
 
 Example in [./example/rolldown.config.ts](../example/rolldown.config.ts): `cd example && bun run dev:rolldown`
 
-> [!NOTE] Rolldown dev usage requires an explicit `port` option.
+> [!NOTE]
+>
+> Rolldown dev usage requires an explicit `port` option.
 
 <br></details>
 
 ## Virtual Module: Access Tunnel URL
 
-> [!NOTE] This feature is available in supported dev integrations, including Vite, Webpack, Rspack, esbuild, Rollup, and Rolldown.
+> [!NOTE]
+>
+> This feature is available in supported dev integrations, including Vite, Webpack, Rspack, esbuild, Rollup, and Rolldown.
 
 The plugin provides a virtual module that allows you to access the tunnel URL in your application code during development. This is useful for:
 
