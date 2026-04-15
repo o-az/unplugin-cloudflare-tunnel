@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "esnext",
     "lib": [
-      "es2023"
+      "es2024"
     ],
     "moduleDetection": "force",
     "module": "preserve",

@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from 'vite'
+
 import CloudflareTunnel from '../src/vite.ts'
 
 export default defineConfig(config => {
@@ -14,6 +15,9 @@ export default defineConfig(config => {
   if (!tunnelDnsName) throw new Error('CLOUDFLARE_TUNNEL_DNS_NAME is not set')
 
   return {
+    define: {
+      __VIA_TOOL__: JSON.stringify('vite')
+    },
     plugins: [
       CloudflareTunnel({
         apiToken,
@@ -21,11 +25,11 @@ export default defineConfig(config => {
         tunnelName: 'dev-tunnel',
         ssl: `*.${tunnelDnsName}`,
         hostname: `dev.${tunnelDnsName}`,
-        logFile: './logs/cloudflare-tunnel_vite.log',
-      }),
+        logFile: './logs/cloudflare-tunnel_vite.log'
+      })
     ],
     server: {
-      port: 420_69,
-    },
+      port: 420_69
+    }
   }
 })

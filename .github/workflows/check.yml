@@ -16,30 +16,34 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     steps:
-      - name: "🔑 Checkout"
+      - name: '🔑 Checkout'
         uses: actions/checkout@v6
 
-      - name: "🐰 Setup Bun"
+      - name: '🐰 Setup Bun'
         uses: oven-sh/setup-bun@main
         with:
           bun-version: latest
 
-      - name: "Install Dependencies"
-        run: bun install --frozen-lockfile
+      - name: 'Install Dependencies'
+        run: |
+          bun install --frozen-lockfile
+          cd example && bun install --frozen-lockfile
 
-      - name: "Setup Biome"
-        uses: biomejs/setup-biome@main
-        with:
-          version: latest
+      - name: 'Format & Lint & Type Check'
+        run: |
+          bun --bun oxfmt --config oxfmt.config.ts . --check
+          bun --bun oxlint \
+            --config='oxlint.config.ts' \
+            --type-check \
+            --type-aware \
+            --format='github'
+          bun tsgo --project tsconfig.json --noEmit
 
-      - name: "Format & Lint"
-        run: biome ci .
-
-      - name: "Type Check"
-        run: bun tsgo --project tsconfig.json --noEmit
-
-      - name: "Build"
+      - name: 'Build'
         run: bun run build
 
-      - name: "Preview Release"
+      - name: 'Test'
+        run: bun run test
+
+      - name: 'Preview Release'
         run: bun x pkg-pr-new publish .

@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import 'webpack-dev-server'
-import type webpack from 'webpack'
+import webpack from 'webpack'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 
 import CloudflareTunnel from '../src/webpack.ts'
@@ -11,16 +11,25 @@ if (!apiToken) throw new Error('CLOUDFLARE_API_TOKEN is not set')
 const tunnelDnsName = process.env.CLOUDFLARE_TUNNEL_DNS_NAME
 if (!tunnelDnsName) throw new Error('CLOUDFLARE_TUNNEL_DNS_NAME is not set')
 
+const cloudflareTunnelPlugin = CloudflareTunnel({
+  apiToken,
+  logLevel: 'fatal',
+  tunnelName: 'dev-tunnel',
+  ssl: `*.${tunnelDnsName}`,
+  hostname: `dev.${tunnelDnsName}`,
+  logFile: './logs/cloudflare-tunnel_webpack.log'
+}) as unknown as webpack.WebpackPluginInstance
+
 export default {
   name: 'unplugin-cloudflare-tunnel Webpack example',
   devServer: {
-    port: 88_11,
+    port: 88_11
   },
   dotenv: true,
   entry: './main.mjs',
   mode: 'development',
   resolve: {
-    extensions: ['.ts', '.js', '.mjs'],
+    extensions: ['.ts', '.js', '.mjs']
   },
   module: {
     rules: [
@@ -29,24 +38,20 @@ export default {
         use: {
           loader: 'ts-loader',
           options: {
-            onlyCompileBundledFiles: true,
-          },
+            onlyCompileBundledFiles: true
+          }
         },
-        exclude: /node_modules/,
-      },
-    ],
+        exclude: /node_modules/
+      }
+    ]
   },
   plugins: [
-    new HtmlWebpackPlugin({
-      template: './index.html',
+    new webpack.DefinePlugin({
+      __VIA_TOOL__: JSON.stringify('webpack')
     }),
-    CloudflareTunnel({
-      apiToken,
-      logLevel: 'fatal',
-      tunnelName: 'dev-tunnel',
-      ssl: `*.${tunnelDnsName}`,
-      hostname: `dev.${tunnelDnsName}`,
-      logFile: './logs/cloudflare-tunnel_webpack.log',
-    }) as unknown as webpack.WebpackPluginInstance,
-  ],
+    new HtmlWebpackPlugin({
+      template: './index.html'
+    }),
+    cloudflareTunnelPlugin
+  ]
 } satisfies webpack.Configuration

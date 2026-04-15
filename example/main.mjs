@@ -1,12 +1,26 @@
 import { getTunnelUrl } from 'virtual:unplugin-cloudflare-tunnel'
 
+console.info(__VIA_TOOL__)
+
 const app = document.querySelector('div#app')
 
 // Simple status checker
 function updateStatus() {
+  const viaToolElement = app?.querySelector('code#via-tool')
+  if (viaToolElement) viaToolElement.textContent = __VIA_TOOL__
+
   const statusElement = app?.querySelector('p#status')
   const tunnelUrlElement = app?.querySelector('a#tunnel-url')
   if (!statusElement || !tunnelUrlElement) return
+
+  const localUrlElement = app?.querySelector('a#local-url')
+  if (localUrlElement)
+    Object.assign(localUrlElement, {
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      href: window.location.origin,
+      textContent: window.location.origin
+    })
 
   try {
     // Get the tunnel URL from the virtual module
@@ -14,8 +28,7 @@ function updateStatus() {
 
     // Check if we can detect we're running through Cloudflare
     const isCloudflare =
-      document.location.hostname !== 'localhost' &&
-      document.location.hostname !== '127.0.0.1'
+      document.location.hostname !== 'localhost' && document.location.hostname !== '127.0.0.1'
 
     if (isCloudflare) {
       statusElement.textContent = '🟢 Connected via Cloudflare Tunnel'
@@ -27,14 +40,13 @@ function updateStatus() {
       const copyButton = app?.querySelector('button#copy-url')
       if (copyButton) {
         copyButton.style.display = 'inline-block'
-        copyButton.onclick = () => {
-          navigator.clipboard.writeText(tunnelUrl)
+        copyButton.onclick = async () => {
+          await navigator.clipboard.writeText(tunnelUrl)
           alert('Tunnel URL copied to clipboard!')
         }
       }
     } else {
-      statusElement.textContent =
-        '🟡 Running locally (tunnel may be starting...)'
+      statusElement.textContent = '🟡 Running locally (tunnel may be starting...)'
       statusElement.style.color = 'orange'
       tunnelUrlElement.textContent = tunnelUrl || 'Tunnel starting...'
     }

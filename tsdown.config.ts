@@ -1,4 +1,5 @@
 import { defineConfig } from 'tsdown'
+
 import pkg from '#package.json' with { type: 'json' }
 
 export default defineConfig({
@@ -11,17 +12,17 @@ export default defineConfig({
   entry: ['./src/*.ts'],
   exports: {
     all: true,
-    packageJson: true,
+    packageJson: true
   },
   tsconfig: './tsconfig.json',
   attw: {
     enabled: true,
     profile: 'esm-only',
-    ignoreRules: ['false-cjs', 'cjs-resolves-to-esm'],
+    ignoreRules: ['false-cjs', 'cjs-resolves-to-esm']
   },
   unused: {
     ignore: {
-      peerDependencies: Object.keys(pkg.peerDependencies ?? {}),
-    },
-  },
+      peerDependencies: Object.keys(pkg.peerDependencies ?? {})
+    }
+  }
 })

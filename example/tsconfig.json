@@ -4,8 +4,8 @@
     "useDefineForClassFields": true,
     "module": "ESNext",
     "lib": [
-      "ESNext",
       "DOM",
+      "ESNext",
       "DOM.Iterable"
     ],
     "skipLibCheck": true,
@@ -44,14 +44,23 @@
     "main.mjs",
     "reset.d.ts",
     "package.json",
-    "vite-env.d.ts",
+    "env.d.ts",
     "vite.config.ts",
     "rspack.config.ts",
-    "webpack.config.ts"
+    "webpack.config.ts",
+    "esbuild.config.ts",
+    "rollup.config.ts",
+    "rolldown.config.ts"
   ],
   "include": [
     "**/*.ts",
     "**/*.js",
     "**/*.mjs"
+  ],
+  "exclude": [
+    "dist",
+    "dist-esbuild",
+    "dist-rollup",
+    "dist-rolldown"
   ]
 }

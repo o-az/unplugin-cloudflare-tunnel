@@ -1,23 +1,19 @@
 # unplugin-cloudflare-tunnel
 
-[![Open on npmx.dev](https://npmx.dev/api/registry/badge/version/unplugin-cloudflare-tunnel)](https://npmx.dev/package/unplugin-cloudflare-tunnel)
-[![pkg.pr.new](https://pkg.pr.new/badge/o-az/unplugin-cloudflare-tunnel)](https://pkg.pr.new/~/o-az/unplugin-cloudflare-tunnel)
+[![Open on npmx.dev](https://npmx.dev/api/registry/badge/version/unplugin-cloudflare-tunnel)](https://npmx.dev/package/unplugin-cloudflare-tunnel) [![pkg.pr.new](https://pkg.pr.new/badge/o-az/unplugin-cloudflare-tunnel)](https://pkg.pr.new/~/o-az/unplugin-cloudflare-tunnel)
 
-A plugin that automatically creates and manages Cloudflare tunnels for local development.
-Available for:
+A plugin that automatically creates and manages Cloudflare tunnels for local development. Available for:
 
-- [Vite](https://vite.dev),
+- [Vite](https://vite.dev)
 - [Rspack](https://rspack.rs)
 - [Webpack](https://webpack.js.org)
+- [esbuild](https://esbuild.github.io)
+- [Rollup](https://rollupjs.org)
+- [Rolldown](https://rolldown.rs)
 - [Astro](https://astro.build) <sup>soon</sup>
 - [Farm](https://farmfe.org) <sup>soon</sup>
-- [esbuild](https://esbuild.github.io) <sup>soon</sup>
-- [Rollup](https://rollupjs.org) <sup>soon</sup>
-- [Rolldown](https://rolldown.rs) <sup>soon</sup>
 
-> [!NOTE]
-> This is under active development.
-> If you have any suggestions, I'm all ears, please open an issue.
+> [!NOTE] This is under active development. If you have any suggestions, I'm all ears, please open an issue.
 
 ## Install
 
@@ -65,9 +61,9 @@ export default defineConfig({
   plugins: [
     CloudflareTunnel({
       mode: 'quick',
-      protocol: 'http2',
-    }),
-  ],
+      protocol: 'http2'
+    })
+  ]
 })
 ```
 
@@ -84,9 +80,9 @@ export default defineConfig({
       mode: 'named',
       hostname: 'dev.example.com',
       apiToken: process.env.CLOUDFLARE_API_TOKEN,
-      protocol: 'http2',
-    }),
-  ],
+      protocol: 'http2'
+    })
+  ]
 })
 ```
 
@@ -101,13 +97,13 @@ import CloudflareTunnel from 'unplugin-cloudflare-tunnel/vite'
 export default defineConfig({
   plugins: [
     CloudflareTunnel({
-      mode: 'quick',
-    }),
-  ],
+      mode: 'quick'
+    })
+  ]
 })
 ```
 
-Example in [./example/vite.config.ts](../example/vite.config.ts): `bun --filter example dev:vite`
+Example in [./example/vite.config.ts](../example/vite.config.ts): `cd example && bun run dev:vite`
 
 <br></details>
 
@@ -120,13 +116,11 @@ import CloudflareTunnel from 'unplugin-cloudflare-tunnel/rspack'
 
 export default {
   /* ... */
-  plugins: [
-    CloudflareTunnel(),
-  ]
+  plugins: [CloudflareTunnel()]
 }
 ```
 
-Example in [./example/rspack.config.ts](../example/rspack.config.ts): `bun --filter example dev:rspack`
+Example in [./example/rspack.config.ts](../example/rspack.config.ts): `cd example && bun run dev:rspack`
 
 <br></details>
 
@@ -135,23 +129,102 @@ Example in [./example/rspack.config.ts](../example/rspack.config.ts): `bun --fil
 
 ```ts
 // webpack.config.js
+const CloudflareTunnel = require('unplugin-cloudflare-tunnel/webpack')
+
 module.exports = {
   /* ... */
-  plugins: [
-    require('unplugin-cloudflare-tunnel/webpack')({
-      CloudflareTunnel(),
-  ]
+  plugins: [CloudflareTunnel()]
 }
 ```
 
-Example in [./example/webpack.config.ts](../example/webpack.config.ts): `bun --filter example dev:webpack`
+Example in [./example/webpack.config.ts](../example/webpack.config.ts): `cd example && bun run dev:webpack`
+
+<br></details>
+
+<details>
+<summary>esbuild</summary><br>
+
+```ts
+// esbuild.config.ts
+import { context } from 'esbuild'
+import CloudflareTunnel from 'unplugin-cloudflare-tunnel/esbuild'
+
+const ctx = await context({
+  entryPoints: ['./main.mjs'],
+  bundle: true,
+  outdir: './dist',
+  outExtension: { '.js': '.mjs' },
+  define: {
+    __VIA_TOOL__: JSON.stringify('esbuild')
+  },
+  plugins: [
+    CloudflareTunnel({
+      hostname: 'dev.example.com',
+      apiToken: process.env.CLOUDFLARE_API_TOKEN,
+      port: 6420
+    })
+  ]
+})
+
+await ctx.watch()
+await ctx.serve({ port: 6420, servedir: './dist' })
+```
+
+Example in [./example/esbuild.config.ts](../example/esbuild.config.ts): `cd example && bun run esbuild.config.ts`
+
+<br></details>
+
+<details>
+<summary>Rollup</summary><br>
+
+```ts
+// rollup.config.ts
+import { defineConfig } from 'rollup'
+import CloudflareTunnel from 'unplugin-cloudflare-tunnel/rollup'
+
+export default defineConfig({
+  /* ... */
+  plugins: [
+    CloudflareTunnel({
+      hostname: 'dev.example.com',
+      apiToken: process.env.CLOUDFLARE_API_TOKEN,
+      port: 6421
+    })
+  ]
+})
+```
+
+Example in [./example/rollup.config.ts](../example/rollup.config.ts): `cd example && bun run dev:rollup`
+
+<br></details>
+
+<details>
+<summary>Rolldown</summary><br>
+
+```ts
+// rolldown.config.ts
+import { defineConfig } from 'rolldown'
+import CloudflareTunnel from 'unplugin-cloudflare-tunnel/rolldown'
+
+export default defineConfig({
+  /* ... */
+  plugins: [
+    CloudflareTunnel({
+      hostname: 'dev.example.com',
+      apiToken: process.env.CLOUDFLARE_API_TOKEN,
+      port: 6422
+    })
+  ]
+})
+```
+
+Example in [./example/rolldown.config.ts](../example/rolldown.config.ts): `cd example && bun run dev:rolldown`
 
 <br></details>
 
 ## Virtual Module: Access Tunnel URL
 
-> [!NOTE]
-> This feature is only available in Vite and Vite-based frameworks (i.e., Astro)
+> [!NOTE] This feature is available in supported dev integrations, including Vite, Webpack, Rspack, esbuild, Rollup, and Rolldown.
 
 The plugin provides a virtual module that allows you to access the tunnel URL in your application code during development. This is useful for:
 

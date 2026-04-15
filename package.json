@@ -17,13 +17,14 @@
   "exports": {
     ".": "./dist/index.mjs",
     "./api": "./dist/api.mjs",
+    "./api-2NRlQjsN": "./dist/api-2NRlQjsN.mjs",
     "./astro": "./dist/astro.mjs",
     "./esbuild": "./dist/esbuild.mjs",
     "./farm": "./dist/farm.mjs",
     "./rolldown": "./dist/rolldown.mjs",
     "./rollup": "./dist/rollup.mjs",
     "./rspack": "./dist/rspack.mjs",
-    "./schemas-Cpk3vGGi": "./dist/schemas-Cpk3vGGi.mjs",
+    "./src-y0QezOnN": "./dist/src-y0QezOnN.mjs",
     "./vite": "./dist/vite.mjs",
     "./webpack": "./dist/webpack.mjs",
     "./*": "./*"
@@ -38,10 +39,12 @@
   },
   "scripts": {
     "build": "tsdown",
-    "check": "biome check . --fix --unsafe",
+    "format": "oxfmt --config='oxfmt.config.ts' --write",
+    "lint": "oxlint --config='oxlint.config.ts' --type-aware --type-check --fix-dangerously",
+    "check": "bun format && bun lint",
     "check:types": "bun tsgo --project tsconfig.json --noEmit",
-    "test": "vitest --run",
-    "changeset:version": "changeset version && biome format . --write",
+    "test": "NODE_NO_WARNINGS=1 vitest --run",
+    "changeset:version": "changeset version && bun format",
     "changeset:publish": "changeset publish",
     "publish:manual": "bun ./scripts/publish.ts --registry='https://registry.npmjs.org'",
     "publint": "bun x publint@latest run --pack bun --strict",
@@ -55,17 +58,21 @@
   },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.2",
-    "@biomejs/biome": "^2.4.12",
     "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.30.0",
     "@j178/prek": "^0.3.8",
+    "@rolldown/pluginutils": "^1.0.0-rc.15",
     "@rspack/core": "^1.7.11",
     "@sxzz/test-utils": "^0.5.16",
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/bun": "^1.3.12",
     "@types/node": "^25.6.0",
     "@typescript/native-preview": "^7.0.0-dev.20260414.1",
+    "oxfmt": "^0.45.0",
+    "oxlint": "^1.60.0",
+    "oxlint-tsgolint": "^0.21.0",
     "publint": "^0.3.18",
+    "rolldown": "^1.0.0-rc.15",
     "rollup": "^4.60.1",
     "simple-git-hooks": "^2.13.1",
     "tsdown": "^0.21.8",
@@ -139,9 +146,9 @@
     "access": "public"
   },
   "inlinedDependencies": {
-    "@oxc-project/types": "0.103.0",
-    "@rolldown/pluginutils": "1.0.0-beta.57",
-    "rolldown": "1.0.0-beta.57",
+    "@oxc-project/types": "0.124.0",
+    "@rolldown/pluginutils": "1.0.0-rc.15",
+    "rolldown": "1.0.0-rc.15",
     "zod": "4.3.6"
   }
 }

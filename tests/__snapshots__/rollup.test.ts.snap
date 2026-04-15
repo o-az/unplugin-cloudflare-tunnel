@@ -1,9 +1,13 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`rollup > basic.js 1`] = `
-"// basic.js
+exports[`rollup > matches the basic fixture snapshot 1`] = `
+{
+  "snapshot": "// basic.js
 const num = 10;
 
 export { num };
-"
+",
+  "source": "export const num = 10
+",
+}
 `;

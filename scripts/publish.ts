@@ -15,20 +15,20 @@ const { values, positionals: _ } = NodeUtil.parseArgs({
     'dry-run': {
       type: 'boolean',
       default: false,
-      multiple: false,
+      multiple: false
     },
     registry: {
       type: 'string',
       multiple: true,
-      default: ['https://registry.npmjs.org'],
-    },
-  },
+      default: ['https://registry.npmjs.org']
+    }
+  }
 })
 
 async function build() {
-  const { stderr, stdout, exitCode } = await Bun.$ /* sh */`bun run build`.env({
+  const { stderr, stdout, exitCode } = await Bun.$ /* sh */ `bun run build`.env({
     ...Bun.env,
-    NODE_ENV: 'production',
+    NODE_ENV: 'production'
   })
 
   if (exitCode !== 0) {
@@ -41,9 +41,9 @@ async function build() {
 }
 
 async function pack() {
-  const { stderr, stdout, exitCode } = await Bun.$ /* sh */`bun pm pack`.env({
+  const { stderr, stdout, exitCode } = await Bun.$ /* sh */ `bun pm pack`.env({
     ...Bun.env,
-    NODE_ENV: 'production',
+    NODE_ENV: 'production'
   })
 
   if (exitCode !== 0) {
@@ -69,7 +69,7 @@ async function publish(registry: string) {
   if (values['dry-run']) extraArgs.push('--dry-run')
   if (isPrerelease) extraArgs.push('--tag=next')
 
-  const { stderr, stdout, exitCode } = await Bun.$ /* sh */`
+  const { stderr, stdout, exitCode } = await Bun.$ /* sh */ `
     npm publish ${packedFile} \
       --access="public" \
       --verbose \
@@ -77,17 +77,13 @@ async function publish(registry: string) {
       ${extraArgs}`
     .env({
       ...Bun.env,
-      NODE_ENV: 'production',
+      NODE_ENV: 'production'
     })
     .nothrow()
 
   if (exitCode !== 0) {
     const stderrStr = stderr.toString()
-    if (
-      stderrStr.includes(
-        'You cannot publish over the previously published versions',
-      )
-    ) {
+    if (stderrStr.includes('You cannot publish over the previously published versions')) {
       console.info(`Version ${pkgJson.version} already published, skipping`)
       return
     }
@@ -102,9 +98,7 @@ async function publish(registry: string) {
 
 async function preChecks() {
   const npmVersion = (
-    await Bun.$ /* sh */`npm --version`
-      .env({ ...Bun.env, NODE_ENV: 'production' })
-      .text()
+    await Bun.$ /* sh */ `npm --version`.env({ ...Bun.env, NODE_ENV: 'production' }).text()
   ).trim()
 
   const order = Bun.semver.order(npmVersion, '11.5.1')
@@ -115,7 +109,7 @@ async function preChecks() {
   NodeProcess.exit(1)
 }
 
-preChecks().then(() =>
+void preChecks().then(() =>
   build()
     .then(() => pack())
     .then(async () => {
@@ -131,5 +125,5 @@ preChecks().then(() =>
       }
 
       NodeProcess.exit(1)
-    }),
+    })
 )

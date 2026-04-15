@@ -1,8 +1,10 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0" />
     <title>Unplugin Cloudflare Tunnel Example</title>
     <style>
       :root {
@@ -95,7 +97,7 @@
       }
 
       #tunnel-url {
-        font-family: "Courier New", monospace;
+        font-family: 'Courier New', monospace;
         background-color: #2a2a2a;
         padding: 0.2em 0.4em;
         border-radius: 4px;
@@ -126,7 +128,14 @@
   <body>
     <div id="app">
       <h1>🌐 Unplugin Cloudflare Tunnel Example</h1>
-      <p>This is a basic app demonstrating the <code>unplugin-cloudflare-tunnel</code>.</p>
+      <p>This is a basic app demonstrating</p>
+      <p><code style="font-size: 1.2rem">unplugin-cloudflare-tunnel</code>.</p>
+      <p>through</p>
+      <p>
+        <code
+          style="font-size: 1.2rem"
+          id="via-tool"></code>
+      </p>
 
       <div class="card">
         <h2>Features</h2>
@@ -141,24 +150,39 @@
       <div class="card">
         <h2>Status</h2>
         <p id="status">Checking tunnel status...</p>
-        <button id="refresh" type="button">Refresh Status</button>
+        <button
+          id="refresh"
+          type="button">
+          Refresh Status
+        </button>
       </div>
 
       <div class="card">
         <h2>Development Info</h2>
         <p>
           <strong>Local:</strong>
-          <span id="local-url">http://localhost:5173</span>
+          <a id="local-url"></a>
         </p>
         <p>
           <strong>Tunnel:</strong>
-          <a id="tunnel-url" href="#" target="_blank" rel="noopener noreferrer">~</a>
-          <button id="copy-url" style="display: none; margin-left: 8px;" type="button">
+          <a
+            id="tunnel-url"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer">
+            ~
+          </a>
+          <button
+            id="copy-url"
+            style="display: none; margin-left: 8px"
+            type="button">
             📋 Copy
           </button>
         </p>
       </div>
     </div>
-    <script type="module" src="./main.mjs"></script>
+    <script
+      type="module"
+      src="./main.mjs"></script>
   </body>
 </html>
