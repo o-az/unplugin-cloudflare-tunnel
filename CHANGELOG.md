@@ -1,5 +1,13 @@
 # unplugin-cloudflare-tunnel
 
+## 0.1.1
+
+### Patch Changes
+
+- [#16](https://github.com/o-az/unplugin-cloudflare-tunnel/pull/16) [`a173f05`](https://github.com/o-az/unplugin-cloudflare-tunnel/commit/a173f0551d763b26d10aceffb19781221e5e94f2) Thanks [@o-az](https://github.com/o-az)! - Stabilized package exports and moved shared API helpers under core
+
+- [#14](https://github.com/o-az/unplugin-cloudflare-tunnel/pull/14) [`a84d38f`](https://github.com/o-az/unplugin-cloudflare-tunnel/commit/a84d38f99d141f3edbb4fb46b046a5ea9396284b) Thanks [@o-az](https://github.com/o-az)! - Added esbuild, Rollup, and Rolldown dev support, normalized tunnel hosts, and hardened shutdown handling
+
 ## 0.1.0
 
 ### Minor Changes
