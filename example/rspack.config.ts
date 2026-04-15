@@ -18,6 +18,9 @@ export default defineConfig({
   entry: './main.mjs',
   mode: 'development',
   plugins: [
+    new rspack.DefinePlugin({
+      __VIA_TOOL__: JSON.stringify('rspack')
+    }),
     new rspack.HtmlRspackPlugin({ template: './index.html' }),
     CloudflareTunnel({
       apiToken,

@@ -14,11 +14,14 @@ import { createUnplugin, type UnpluginFactory, type UnpluginInstance } from 'unp
 import * as z from 'zod/mini'
 import NodeFS from 'node:fs/promises'
 import * as NodeUtil from 'node:util'
+import * as NodeModule from 'node:module'
 import { bin, install } from 'cloudflared'
 import type * as NodeHTTP from 'node:http'
 import type * as NodeHTTPS from 'node:https'
 import type * as NodeHTTP2 from 'node:http2'
 import * as NodeChildProcess from 'node:child_process'
+import type { Compiler as WebpackCompiler } from 'webpack'
+import type { Compiler as RspackCompiler } from '@rspack/core'
 
 const PLUGIN_NAME = 'unplugin-cloudflare-tunnel'
 
@@ -801,9 +804,8 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
       return apiResponse.result as T
     } catch (error) {
       if (error instanceof Error) {
-        if (error.message.includes('[unplugin-cloudflare-tunnel]')) {
-          throw error
-        }
+        if (error.message.includes('[unplugin-cloudflare-tunnel]')) throw error
+
         throw new Error(`[unplugin-cloudflare-tunnel] API request failed: ${error.message}`)
       }
       throw new Error('[unplugin-cloudflare-tunnel] Unknown API error occurred')
@@ -898,9 +900,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
             console.log(`[cloudflared stdout] ${output.trim()}`)
           } else {
             for (const line of output.split('\n')) {
-              if (!INFO_LOG_REGEX.test(line)) {
-                console.log(`[cloudflared stdout] ${line.trim()}`)
-              }
+              if (!INFO_LOG_REGEX.test(line)) console.log(`[cloudflared stdout] ${line.trim()}`)
             }
           }
         }
@@ -928,9 +928,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
             console.error(`[cloudflared stderr] ${error}`)
           } else {
             for (const line of error.split('\n')) {
-              if (!INFO_LOG_REGEX.test(line)) {
-                console.error(`[cloudflared stderr] ${line.trim()}`)
-              }
+              if (!INFO_LOG_REGEX.test(line)) console.error(`[cloudflared stderr] ${line.trim()}`)
             }
           }
         }
@@ -969,9 +967,8 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
       const settle = () => {
         if (settled) return
         settled = true
-        if (forceKillTimer) {
-          clearTimeout(forceKillTimer)
-        }
+        if (forceKillTimer) clearTimeout(forceKillTimer)
+
         resolve()
       }
 
@@ -1002,9 +999,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
                   settle()
                 }
               }
-            } else {
-              settle()
-            }
+            } else settle()
           }, 2000)
         } else if (!killed) {
           settle()
@@ -1091,7 +1086,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
     }
 
     const registerListeningHandler = (handler: () => Promise<void> | void) => {
-      const httpServer = server.httpServer as any
+      const httpServer = server.httpServer
       if (!httpServer) return
 
       const invokeHandler = () => {
@@ -1113,9 +1108,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
       httpServer.on('listening', invokeHandler)
 
-      if (httpServer.listening) {
-        invokeHandler()
-      }
+      if (httpServer.listening) invokeHandler()
     }
 
     try {
@@ -1328,7 +1321,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
         undefined,
         z.array(TunnelSchema)
       )
-      let tunnel = tunnels[0]
+      let [tunnel] = tunnels
 
       if (!tunnel) {
         pluginLog.info(`Creating tunnel '${tunnelName}'...`)
@@ -1370,9 +1363,9 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
           hostname!
         )
         if (mismatchedSslCerts.length > 0) {
-          for (const cert of mismatchedSslCerts) {
+          for (const cert of mismatchedSslCerts)
             await cf(apiToken, 'DELETE', `/zones/${zoneId}/ssl/certificate_packs/${cert.id}`)
-          }
+
           pluginLog.warn(`SSL cleanup: ${mismatchedSslCerts.length} deleted`)
         }
       } else {
@@ -1486,7 +1479,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
       )
 
       try {
-        const certListRaw: any = await cf(
+        const certListRaw = await cf(
           apiToken,
           'GET',
           `/zones/${zoneId}/ssl/certificate_packs?status=all`,
@@ -1524,9 +1517,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
               })
             )
 
-            if (newCert?.id) {
-              trackSslCertificate(newCert.id, certificateHosts, tunnelName)
-            }
+            if (newCert?.id) trackSslCertificate(newCert.id, certificateHosts, tunnelName)
           } else {
             debugLog('← Edge certificate already exists', matchingCert)
           }
@@ -1618,9 +1609,8 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
       const spawnNamedTunnelProcess = (protocol: 'quic' | 'http2') => {
         const cloudflaredArgs = ['tunnel']
         cloudflaredArgs.push('--loglevel', cloudflaredProcessLogLevel)
-        if (logFile) {
-          cloudflaredArgs.push('--logfile', logFile)
-        }
+        if (logFile) cloudflaredArgs.push('--logfile', logFile)
+
         cloudflaredArgs.push('--protocol', protocol)
 
         debugLog('Spawning cloudflared', bin, cloudflaredArgs)
@@ -1643,9 +1633,8 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
         const handleCloudflaredOutput = (kind: 'stdout' | 'stderr', text: string) => {
           if (text.includes('Failed to parse ICMP reply') || text.includes('unknow ip version 0')) {
-            if (logLevel === 'debug') {
-              console.log(`[cloudflared debug] ${text.trim()}`)
-            }
+            if (logLevel === 'debug') console.log(`[cloudflared debug] ${text.trim()}`)
+
             return
           }
 
@@ -1675,11 +1664,10 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
           console.error(
             `[unplugin-cloudflare-tunnel] ❌ Failed to start tunnel process: ${error.message}`
           )
-          if (error.message.includes('ENOENT')) {
+          if (error.message.includes('ENOENT'))
             console.error(
               `[unplugin-cloudflare-tunnel] Hint: cloudflared binary may not be installed correctly`
             )
-          }
         })
 
         spawnedChild.on('exit', (code, signal) => {
@@ -1687,12 +1675,10 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
           if (code !== 0 && code !== null) {
             console.error(`[unplugin-cloudflare-tunnel] ❌ Tunnel process exited with code ${code}`)
-            if (signal) {
+            if (signal)
               console.error(`[unplugin-cloudflare-tunnel] Process terminated by signal: ${signal}`)
-            }
-          } else if (code === 0) {
+          } else if (code === 0)
             console.log(`[unplugin-cloudflare-tunnel] ✅ Tunnel process exited cleanly`)
-          }
         })
       }
 
@@ -1811,9 +1797,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
     let modified = false
     const current = devServerOptions.allowedHosts
 
-    if (current === 'all') {
-      return
-    }
+    if (current === 'all') return
 
     if (typeof current === 'undefined' || current === 'auto') {
       normalizeArray(['localhost', hostToAllow])
@@ -1857,14 +1841,52 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
     }
   }
 
-  const setupWebpackLikeDevServerIntegration = (compiler: any, bundler: 'webpack' | 'rspack') => {
+  const setupWebpackVirtualScheme = (compiler: WebpackCompiler) => {
+    const plugins = (compiler.options.plugins ??= []) as Array<any>
+    if (plugins.some(plugin => plugin?.__unpluginCloudflareTunnelVirtualSchemePlugin)) {
+      return
+    }
+
+    const context =
+      typeof compiler.options.context === 'string' && compiler.options.context.length > 0
+        ? compiler.options.context
+        : process.cwd()
+
+    let VirtualUrlPlugin: any
+    try {
+      const requireFromContext = NodeModule.createRequire(`${context}/package.json`)
+      VirtualUrlPlugin = requireFromContext('webpack/lib/schemes/VirtualUrlPlugin')
+    } catch {
+      return
+    }
+
+    const virtualSchemePlugin = new VirtualUrlPlugin(
+      {
+        'unplugin-cloudflare-tunnel': {
+          type: '.js',
+          async source() {
+            const url = await globalState.tunnelUrl
+            return `export function getTunnelUrl() { return ${JSON.stringify(url || '')}; }`
+          }
+        }
+      },
+      'virtual'
+    )
+
+    ;(virtualSchemePlugin as any).__unpluginCloudflareTunnelVirtualSchemePlugin = true
+    plugins.unshift(virtualSchemePlugin)
+    virtualSchemePlugin.apply(compiler)
+  }
+
+  const setupWebpackLikeDevServerIntegration = (
+    compiler: WebpackCompiler | RspackCompiler,
+    bundler: 'webpack' | 'rspack'
+  ) => {
     const mode = compiler?.options?.mode ?? process.env.NODE_ENV
     if (mode === 'production') return
 
-    const optionsContainer = compiler.options as Record<string, any>
-    if (!optionsContainer.devServer) {
-      optionsContainer.devServer = {}
-    }
+    const optionsContainer = compiler.options
+    if (!optionsContainer.devServer) optionsContainer.devServer = {}
 
     const devServerOptions: Record<string, any> = optionsContainer.devServer
 
@@ -2024,6 +2046,7 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
     },
 
     webpack: compiler => {
+      setupWebpackVirtualScheme(compiler)
       setupWebpackLikeDevServerIntegration(compiler, 'webpack')
     },
 
@@ -2055,10 +2078,7 @@ function normalizeAddress(
       host: normalizeHost(
         'address' in address && address.address ? (address as any).address : undefined
       ),
-      port:
-        'port' in address && typeof (address as any).port === 'number'
-          ? (address as any).port
-          : undefined
+      port: 'port' in address && typeof address?.port === 'number' ? address?.port : undefined
     }
   }
   return { host: 'localhost' }

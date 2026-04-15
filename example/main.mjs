@@ -1,12 +1,26 @@
 import { getTunnelUrl } from 'virtual:unplugin-cloudflare-tunnel'
 
+console.info(__VIA_TOOL__)
+
 const app = document.querySelector('div#app')
 
 // Simple status checker
 function updateStatus() {
+  const viaToolElement = app?.querySelector('code#via-tool')
+  if (viaToolElement) viaToolElement.textContent = __VIA_TOOL__
+
   const statusElement = app?.querySelector('p#status')
   const tunnelUrlElement = app?.querySelector('a#tunnel-url')
   if (!statusElement || !tunnelUrlElement) return
+
+  const localUrlElement = app?.querySelector('a#local-url')
+  if (localUrlElement)
+    Object.assign(localUrlElement, {
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      href: window.location.origin,
+      textContent: window.location.origin
+    })
 
   try {
     // Get the tunnel URL from the virtual module

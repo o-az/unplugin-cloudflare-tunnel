@@ -128,7 +128,14 @@
   <body>
     <div id="app">
       <h1>🌐 Unplugin Cloudflare Tunnel Example</h1>
-      <p>This is a basic app demonstrating the <code>unplugin-cloudflare-tunnel</code>.</p>
+      <p>This is a basic app demonstrating</p>
+      <p><code style="font-size: 1.2rem">unplugin-cloudflare-tunnel</code>.</p>
+      <p>through</p>
+      <p>
+        <code
+          style="font-size: 1.2rem"
+          id="via-tool"></code>
+      </p>
 
       <div class="card">
         <h2>Features</h2>
@@ -154,7 +161,7 @@
         <h2>Development Info</h2>
         <p>
           <strong>Local:</strong>
-          <span id="local-url">http://localhost:5173</span>
+          <a id="local-url"></a>
         </p>
         <p>
           <strong>Tunnel:</strong>
@@ -162,9 +169,9 @@
             id="tunnel-url"
             href="#"
             target="_blank"
-            rel="noopener noreferrer"
-            >~</a
-          >
+            rel="noopener noreferrer">
+            ~
+          </a>
           <button
             id="copy-url"
             style="display: none; margin-left: 8px"

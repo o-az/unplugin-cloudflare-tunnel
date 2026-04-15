@@ -44,7 +44,7 @@
     "main.mjs",
     "reset.d.ts",
     "package.json",
-    "vite-env.d.ts",
+    "env.d.ts",
     "vite.config.ts",
     "rspack.config.ts",
     "webpack.config.ts"
