@@ -982,27 +982,31 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
         )
         const killed = activeChild.kill(signal)
 
-        if (!killed && process.platform === 'win32') {
-          NodeChildProcess.exec(`taskkill /pid ${activeChild.pid} /T /F`, () => settle())
+        if (!killed) {
+          if (process.platform === 'win32') {
+            NodeChildProcess.exec(`taskkill /pid ${activeChild.pid} /T /F`, () => settle())
+          } else {
+            settle()
+          }
+          return
         }
 
         if (signal === 'SIGTERM') {
           forceKillTimer = setTimeout(() => {
-            if (!activeChild.killed) {
-              debugLog('[unplugin-cloudflare-tunnel] Force killing cloudflared process...')
-              if (process.platform === 'win32') {
-                NodeChildProcess.exec(`taskkill /pid ${activeChild.pid} /T /F`, () => settle())
-              } else {
-                try {
-                  activeChild.kill('SIGKILL')
-                } catch {
-                  settle()
-                }
+            if (settled) return
+
+            debugLog('[unplugin-cloudflare-tunnel] Force killing cloudflared process...')
+            if (process.platform === 'win32') {
+              NodeChildProcess.exec(`taskkill /pid ${activeChild.pid} /T /F`, () => settle())
+            } else {
+              try {
+                const forceKilled = activeChild.kill('SIGKILL')
+                if (!forceKilled) settle()
+              } catch {
+                settle()
               }
-            } else settle()
+            }
           }, 2000)
-        } else if (!killed) {
-          settle()
         }
       } catch (error) {
         debugLog(
