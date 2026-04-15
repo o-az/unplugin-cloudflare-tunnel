@@ -2,4 +2,4 @@
 'unplugin-cloudflare-tunnel': patch
 ---
 
-Normalized tunneld hosts and hardened shutdown handling
+Added esbuild, Rollup, and Rolldown dev support, normalized tunnel hosts, and hardened shutdown handling
