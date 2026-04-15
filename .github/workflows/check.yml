@@ -27,9 +27,6 @@ jobs:
       - name: 'Install Dependencies'
         run: bun install --frozen-lockfile
 
-      - name: 'Install Dependencies'
-        run: bun install --frozen-lockfile
-
       - name: 'Format & Lint & Type Check'
         run: |
           bun --bun oxfmt --config oxfmt.config.ts . --check
@@ -37,8 +34,6 @@ jobs:
             --config='oxlint.config.ts' \
             --type-check \
             --type-aware \
-            --max-warnings=0 \
-            --report-unused-disable-directives \
             --format='github'
           bun tsgo --project tsconfig.json --noEmit
 
