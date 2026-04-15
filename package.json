@@ -16,18 +16,15 @@
   "types": "./dist/index.d.mts",
   "exports": {
     ".": "./dist/index.mjs",
-    "./api": "./dist/api.mjs",
-    "./api-2NRlQjsN": "./dist/api-2NRlQjsN.mjs",
     "./astro": "./dist/astro.mjs",
     "./esbuild": "./dist/esbuild.mjs",
     "./farm": "./dist/farm.mjs",
     "./rolldown": "./dist/rolldown.mjs",
     "./rollup": "./dist/rollup.mjs",
     "./rspack": "./dist/rspack.mjs",
-    "./src-y0QezOnN": "./dist/src-y0QezOnN.mjs",
     "./vite": "./dist/vite.mjs",
     "./webpack": "./dist/webpack.mjs",
-    "./*": "./*"
+    "./package.json": "./package.json"
   },
   "typesVersions": {
     "*": {
@@ -48,7 +45,7 @@
     "changeset:publish": "changeset publish",
     "publish:manual": "bun ./scripts/publish.ts --registry='https://registry.npmjs.org'",
     "publint": "bun x publint@latest run --pack bun --strict",
-    "attw": "bun x @arethetypeswrong/cli@latest --pack . --ignore-rules='false-cjs' --ignore-rules='cjs-resolves-to-esm'",
+    "attw": "bun x @arethetypeswrong/cli@latest --pack . --ignore-rules='false-cjs' --ignore-rules='cjs-resolves-to-esm' --profile='node16'",
     "prepublishOnly": "bun run build",
     "prepare": "simple-git-hooks"
   },
@@ -83,7 +80,8 @@
     "vite": "^8.0.8",
     "vitest": "^4.1.4",
     "webpack-dev-server": "^5.2.3",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "astro": "^6.1.6"
   },
   "peerDependencies": {
     "vite": ">=3",
@@ -144,11 +142,5 @@
   "author": "Omar A <gh@omar.mov>",
   "publishConfig": {
     "access": "public"
-  },
-  "inlinedDependencies": {
-    "@oxc-project/types": "0.124.0",
-    "@rolldown/pluginutils": "1.0.0-rc.15",
-    "rolldown": "1.0.0-rc.15",
-    "zod": "4.3.6"
   }
 }

@@ -50,6 +50,8 @@ Mode selection rules:
 - `debug?: boolean`
 - `enabled?: boolean`
 
+> [!TIP] For esbuild, Rollup, and Rolldown dev usage, set `port` explicitly so the tunnel can target the local dev server.
+
 ### Quick mode example
 
 ```ts
@@ -172,6 +174,8 @@ await ctx.serve({ port: 6420, servedir: './dist' })
 
 Example in [./example/esbuild.config.ts](../example/esbuild.config.ts): `cd example && bun run esbuild.config.ts`
 
+> [!NOTE] esbuild dev usage requires an explicit `port` option.
+
 <br></details>
 
 <details>
@@ -195,6 +199,8 @@ export default defineConfig({
 ```
 
 Example in [./example/rollup.config.ts](../example/rollup.config.ts): `cd example && bun run dev:rollup`
+
+> [!NOTE] Rollup dev usage requires an explicit `port` option.
 
 <br></details>
 
@@ -220,6 +226,8 @@ export default defineConfig({
 
 Example in [./example/rolldown.config.ts](../example/rolldown.config.ts): `cd example && bun run dev:rolldown`
 
+> [!NOTE] Rolldown dev usage requires an explicit `port` option.
+
 <br></details>
 
 ## Virtual Module: Access Tunnel URL
@@ -235,7 +243,7 @@ The plugin provides a virtual module that allows you to access the tunnel URL in
 
 ### Usage
 
-```typescript
+```ts
 import { getTunnelUrl } from 'virtual:unplugin-cloudflare-tunnel'
 
 // Get the current tunnel URL
@@ -254,14 +262,14 @@ shareButton.onclick = () => {
 
 To get TypeScript support for the virtual module, add a reference to the types:
 
-```typescript
+```ts
 // In your tsconfig.json or a .d.ts file
 /// <reference types="unplugin-cloudflare-tunnel/virtual" />
 ```
 
 Or create a `virtual.d.ts` file in your project:
 
-```typescript
+```ts
 /// <reference types="unplugin-cloudflare-tunnel/virtual" />
 ```
 

@@ -33,7 +33,7 @@ import {
   normalizeAddress,
   ensureCloudflaredBinary,
   CloudflareApiResponseSchema
-} from '#api.ts'
+} from '#core/api.ts'
 import {
   type LogLevel,
   type NamedTunnelOptions,
@@ -41,14 +41,13 @@ import {
 } from '#core/options.ts'
 import { createKillCloudflared } from '#core/process.ts'
 
-export type {
-  BaseTunnelOptions,
-  QuickTunnelOptions,
-  NamedTunnelOptions,
-  CloudflareTunnelOptions
-} from '#core/options.ts'
-export { createKillCloudflared } from '#core/process.ts'
-export type { Account, CloudflareApiResponse, DNSRecord, Tunnel, Zone } from '#api.ts'
+// export type {
+//   BaseTunnelOptions,
+//   QuickTunnelOptions,
+//   NamedTunnelOptions,
+//   CloudflareTunnelOptions
+// } from '#core/options.ts'
+// export type { Account, CloudflareApiResponse, DNSRecord, Tunnel, Zone } from '#core/api.ts'
 
 const PLUGIN_NAME = 'unplugin-cloudflare-tunnel'
 

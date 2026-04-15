@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { getLocalTarget, normalizeAddress } from '../src/api.ts'
+import { getLocalTarget, normalizeAddress } from '../src/core/api.ts'
 
 describe('api utilities', () => {
   it('normalizes wildcard server hosts to localhost', () => {
