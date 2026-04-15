@@ -10,14 +10,10 @@ export default defineConfig({
   format: ['esm'],
   target: 'esnext',
   entry: ['./src/*.ts'],
-  exports: {
-    all: true,
-    packageJson: true
-  },
   tsconfig: './tsconfig.json',
   attw: {
     enabled: true,
-    profile: 'esm-only',
+    profile: 'node16',
     ignoreRules: ['false-cjs', 'cjs-resolves-to-esm']
   },
   unused: {

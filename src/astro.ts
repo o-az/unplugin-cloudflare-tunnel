@@ -1,4 +1,5 @@
-import unplugin, { type CloudflareTunnelOptions } from '#index.ts'
+import unplugin from '#index.ts'
+import type { CloudflareTunnelOptions } from '#core/options.ts'
 
 export default (options: CloudflareTunnelOptions): any => ({
   name: 'unplugin-cloudflare-tunnel',

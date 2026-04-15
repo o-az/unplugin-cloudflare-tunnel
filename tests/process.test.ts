@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { createKillCloudflared } from '../src/index.ts'
+import { createKillCloudflared } from '../src/core/process.ts'
 
 function createFakeChild(options?: {
   pid?: number
