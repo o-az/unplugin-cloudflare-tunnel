@@ -25,7 +25,9 @@ jobs:
           bun-version: latest
 
       - name: 'Install Dependencies'
-        run: bun install --frozen-lockfile
+        run: |
+          bun install --frozen-lockfile
+          cd example && bun install --frozen-lockfile
 
       - name: 'Format & Lint & Type Check'
         run: |
