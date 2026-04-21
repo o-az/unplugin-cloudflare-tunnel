@@ -11,7 +11,7 @@
     "dist",
     "LICENSE",
     "package.json",
-    "./.github/README.md"
+    "README.md"
   ],
   "types": "./dist/index.d.mts",
   "exports": {
@@ -47,6 +47,8 @@
     "publint": "bun x publint@latest run --pack bun --strict",
     "attw": "bun x @arethetypeswrong/cli@latest --pack . --ignore-rules='false-cjs' --ignore-rules='cjs-resolves-to-esm' --profile='node16'",
     "prepublishOnly": "bun run build",
+    "prepack": "cp .github/README.md .",
+    "postpack": "rm README.md",
     "prepare": "simple-git-hooks"
   },
   "dependencies": {
@@ -60,28 +62,29 @@
     "@j178/prek": "^0.3.8",
     "@rolldown/pluginutils": "^1.0.0-rc.15",
     "@rspack/core": "^1.7.11",
+    "@socketsecurity/bun-security-scanner": "^1.1.2",
     "@sxzz/test-utils": "^0.5.16",
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/bun": "^1.3.12",
     "@types/node": "^25.6.0",
-    "@typescript/native-preview": "^7.0.0-dev.20260414.1",
-    "oxfmt": "^0.45.0",
-    "oxlint": "^1.60.0",
-    "oxlint-tsgolint": "^0.21.0",
+    "@typescript/native-preview": "^7.0.0-dev.20260421.1",
+    "astro": "^6.1.6",
+    "oxfmt": "^0.46.0",
+    "oxlint": "^1.61.0",
+    "oxlint-tsgolint": "^0.21.1",
     "publint": "^0.3.18",
     "rolldown": "^1.0.0-rc.15",
     "rollup": "^4.60.1",
     "simple-git-hooks": "^2.13.1",
     "tsdown": "^0.21.8",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.2",
+    "typescript": "^6.0.3",
     "unplugin-unused": "^0.5.7",
     "unplugin-utils": "^0.3.1",
     "vite": "^8.0.8",
     "vitest": "^4.1.4",
     "webpack-dev-server": "^5.2.3",
-    "zod": "^4.3.6",
-    "astro": "^6.1.6"
+    "zod": "^4.3.6"
   },
   "peerDependencies": {
     "vite": ">=3",
@@ -132,13 +135,12 @@
     "farm",
     "astro"
   ],
-  "packageManager": "bun@1.3.12",
+  "packageManager": "bun@1.3.13",
   "simple-git-hooks": {
     "pre-commit": "bun prek run --all-files --config='.github/.pre-commit.yml'"
   },
   "license": "MIT",
   "repository": "o-az/unplugin-cloudflare-tunnel",
-  "readme": "https://github.com/o-az/unplugin-cloudflare-tunnel/blob/main/.github/README.md",
   "author": "Omar A <gh@omar.mov>",
   "publishConfig": {
     "access": "public"

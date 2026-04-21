@@ -2,3 +2,6 @@ telemetry = false
 
 [run]
 bun = true
+
+[install.security]
+scanner = "@socketsecurity/bun-security-scanner"
