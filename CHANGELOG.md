@@ -1,5 +1,11 @@
 # unplugin-cloudflare-tunnel
 
+## 0.1.2
+
+### Patch Changes
+
+- [#17](https://github.com/o-az/unplugin-cloudflare-tunnel/pull/17) [`b3cf8d6`](https://github.com/o-az/unplugin-cloudflare-tunnel/commit/b3cf8d6174cdf4c7e471d3c55378db976dd98135) Thanks [@o-az](https://github.com/o-az)! - Include README.md in pkg root
+
 ## 0.1.1
 
 ### Patch Changes
