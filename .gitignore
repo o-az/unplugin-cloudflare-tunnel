@@ -13,3 +13,4 @@ _
 *.log
 
 logs
+*tmp*
