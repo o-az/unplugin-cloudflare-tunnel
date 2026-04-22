@@ -2,7 +2,46 @@
 
 [![Open on npmx.dev](https://npmx.dev/api/registry/badge/version/unplugin-cloudflare-tunnel)](https://npmx.dev/package/unplugin-cloudflare-tunnel) [![pkg.pr.new](https://pkg.pr.new/badge/o-az/unplugin-cloudflare-tunnel)](https://pkg.pr.new/~/o-az/unplugin-cloudflare-tunnel)
 
-A plugin that automatically creates and manages Cloudflare tunnels for local development. Available for:
+Easy, reliable `HTTPS` for local development:
+
+`unplugin-cloudflare-tunnel` is a plugin that automatically creates and manages Cloudflare tunnels for local development.
+
+```ts
+import { defineConfig } from 'vite'
+import CloudflareTunnel from 'unplugin-cloudflare-tunnel/vite'
+
+export default defineConfig({
+  plugins: [
+    CloudflareTunnel({
+      tunnelName: 'dev-tunnel',
+      ssl: '*.chaos.md',
+      hostname: 'dev.chaos.md',
+      apiToken: process.env.CLOUDFLARE_API_TOKEN
+    })
+  ]
+})
+```
+
+Running `vite dev`:
+
+```sh
+vite dev --port 3939
+
+cf tunnel connecting… (dev.chaos.md)
+
+  VITE v8.0.8  ready in 98 ms
+
+        [unplugin-cloudflare-tunnel]
+────────────────────────────────────────────
+                 Tunnel URL
+            https://dev.chaos.md
+
+                   Local
+           http://localhost:3939
+────────────────────────────────────────────
+```
+
+Available for:
 
 - [Vite](https://vite.dev)
 - [Rspack](https://rspack.rs)
@@ -11,18 +50,11 @@ A plugin that automatically creates and manages Cloudflare tunnels for local dev
 - [Rollup](https://rollupjs.org)
 - [Rolldown](https://rolldown.rs)
 - [Astro](https://astro.build) <sup>soon</sup>
-- [Farm](https://farmfe.org) <sup>soon</sup>
-
-> [!NOTE]
->
-> This is under active development. If you have any suggestions, I'm all ears, please open an issue.
 
 ## Install
 
-unplugin-cloudflare-tunnel
-
 ```bash
-npm add unplugin-cloudflare-tunnel
+npm add --dev unplugin-cloudflare-tunnel
 ```
 
 ## Usage
@@ -51,46 +83,6 @@ Mode selection rules:
 - `logFile?: string`
 - `debug?: boolean`
 - `enabled?: boolean`
-
-> [!TIP]
->
-> For esbuild, Rollup, and Rolldown dev usage, set `port` explicitly so the tunnel can target the local dev server.
-
-### Quick mode example
-
-```ts
-// vite.config.ts
-import { defineConfig } from 'vite'
-import CloudflareTunnel from 'unplugin-cloudflare-tunnel/vite'
-
-export default defineConfig({
-  plugins: [
-    CloudflareTunnel({
-      mode: 'quick',
-      protocol: 'http2'
-    })
-  ]
-})
-```
-
-### Named mode example
-
-```ts
-// vite.config.ts
-import { defineConfig } from 'vite'
-import CloudflareTunnel from 'unplugin-cloudflare-tunnel/vite'
-
-export default defineConfig({
-  plugins: [
-    CloudflareTunnel({
-      mode: 'named',
-      hostname: 'dev.example.com',
-      apiToken: process.env.CLOUDFLARE_API_TOKEN,
-      protocol: 'http2'
-    })
-  ]
-})
-```
 
 <details>
 <summary>Vite</summary><br>
@@ -150,6 +142,10 @@ Example in [./example/webpack.config.ts](../example/webpack.config.ts): `cd exam
 <details>
 <summary>esbuild</summary><br>
 
+> [!NOTE]
+>
+> esbuild dev usage requires an explicit `port` option.
+
 ```ts
 // esbuild.config.ts
 import { context } from 'esbuild'
@@ -177,10 +173,6 @@ await ctx.serve({ port: 6420, servedir: './dist' })
 ```
 
 Example in [./example/esbuild.config.ts](../example/esbuild.config.ts): `cd example && bun run esbuild.config.ts`
-
-> [!NOTE]
->
-> esbuild dev usage requires an explicit `port` option.
 
 <br></details>
 
@@ -291,14 +283,11 @@ Or create a `virtual.d.ts` file in your project:
 - **Named tunnel mode**: Returns your custom domain URL like `https://dev.example.com`
 - **Plugin disabled**: Returns an empty string `""`
 
-### Notes on modes
+### Notes
 
 - Named-only options such as `hostname`, `apiToken`, `accountId`, `zoneId`, `tunnelName`, `dns`, `ssl`, and `cleanup` are only valid in named mode.
 - Quick mode ignores Cloudflare account setup entirely and creates an ephemeral tunnel.
 - `protocol` applies to both quick and named modes.
-
-### Notes
-
 - The virtual module is only available during development mode
 - In production builds, the virtual module will not be available
 - The URL is automatically updated if the port changes or tunnel restarts

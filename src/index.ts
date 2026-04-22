@@ -1849,5 +1849,3 @@ const unpluginFactory: UnpluginFactory<CloudflareTunnelOptions | undefined> = (
 
 export const CloudflareTunnel: UnpluginInstance<CloudflareTunnelOptions | undefined, false> =
   createUnplugin(unpluginFactory)
-
-export default CloudflareTunnel

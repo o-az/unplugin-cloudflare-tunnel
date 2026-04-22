@@ -18,7 +18,6 @@
     ".": "./dist/index.mjs",
     "./astro": "./dist/astro.mjs",
     "./esbuild": "./dist/esbuild.mjs",
-    "./farm": "./dist/farm.mjs",
     "./rolldown": "./dist/rolldown.mjs",
     "./rollup": "./dist/rollup.mjs",
     "./rspack": "./dist/rspack.mjs",
@@ -45,6 +44,7 @@
     "changeset:publish": "changeset publish",
     "publish:manual": "bun ./scripts/publish.ts --registry='https://registry.npmjs.org'",
     "publint": "bun x publint@latest run --pack bun --strict",
+    "knip": "knip --config='knip.config.ts' --fix",
     "attw": "bun x @arethetypeswrong/cli@latest --pack . --ignore-rules='false-cjs' --ignore-rules='cjs-resolves-to-esm' --profile='node16'",
     "prepublishOnly": "bun run build",
     "prepack": "cp .github/README.md .",
@@ -60,15 +60,13 @@
     "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.30.0",
     "@j178/prek": "^0.3.8",
-    "@rolldown/pluginutils": "^1.0.0-rc.15",
     "@rspack/core": "^1.7.11",
-    "@socketsecurity/bun-security-scanner": "^1.1.2",
     "@sxzz/test-utils": "^0.5.16",
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/bun": "^1.3.12",
     "@types/node": "^25.6.0",
-    "@typescript/native-preview": "^7.0.0-dev.20260421.1",
-    "astro": "^6.1.6",
+    "@typescript/native-preview": "^7.0.0-dev.20260422.1",
+    "knip": "^6.6.1",
     "oxfmt": "^0.46.0",
     "oxlint": "^1.61.0",
     "oxlint-tsgolint": "^0.21.1",
@@ -80,25 +78,19 @@
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "unplugin-unused": "^0.5.7",
-    "unplugin-utils": "^0.3.1",
     "vite": "^8.0.8",
     "vitest": "^4.1.4",
-    "webpack-dev-server": "^5.2.3",
     "zod": "^4.3.6"
   },
   "peerDependencies": {
-    "vite": ">=3",
+    "@rspack/core": ">=1",
+    "astro": ">=5",
     "esbuild": ">=0.2",
     "rollup": ">=3",
-    "@farmfe/core": ">=1",
-    "webpack": ">=5",
-    "@rspack/core": ">=1",
-    "astro": ">=5"
+    "vite": ">=3",
+    "webpack": ">=5"
   },
   "peerDependenciesMeta": {
-    "@farmfe/core": {
-      "optional": true
-    },
     "esbuild": {
       "optional": true
     },
